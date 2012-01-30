@@ -68,8 +68,42 @@ public class HTTPServer {
 			}
 		}
 	
+	private void doGet(String request) {
+		String[] parts = request.split(" ");
+		String[] path = parts[1].split("?");
+		Map<String,String> map = makeMap(path[1]);
+		
+		
+	}
+	
+	private void doPost(String request) {
+		
+	}
+	
+	private Map<String,String> makeMap(String vars){
+		String[] parts = vars.split("&");
+		Map<String,String> map = new HashMap<String,String>();
+		for(String part : parts){
+			String[] keyValue = part.split("=");
+			map.put(keyValue[0], keyValue[1]);
+		}
+		return map;
+	}
+	
 	private void processRequest(String request) 
 			throws IOException {
+		
+		if(!isValidRequest(request)){
+			errorReport(pout, con, "400", "Bad Request", 
+					"Your Browser sent a request that this server could not understand.");
+		}
+		
+		if(request.startsWith("POST"))
+			doPost(request);
+		
+		if(request.startsWith("GET"))
+			doGet(request);
+		
 		if (!request.startsWith("GET") || 
 				request.length()<14 || 
 				!(request.endsWith("HTTP/1.0") || request.endsWith("HTTP/1.1")) || 
@@ -112,6 +146,25 @@ public class HTTPServer {
 				}
 			}
 		} 
+	}
+	
+	private boolean isValidRequest(String request){
+		
+		// Check for valid method types
+		if(!request.startsWith("POST") && !request.startsWith("GET")){
+			return false;
+		}
+		
+		// Check for valid HTTP version
+		if(!request.endsWith("HTTP/1.0") && !request.endsWith("HTTP/1.1"))
+			return false;
+		
+		// Check that the requested path starts with a /
+		String[] parts = request.split(" ");
+		if(!parts[1].startsWith("/"))
+			return false;
+		
+		return true;
 	}
 	
 	private void log (Socket con, String msg) {
