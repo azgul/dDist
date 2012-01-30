@@ -11,17 +11,15 @@ import java.net.URLConnection;
  */
 public class GeneralFileProcessingStrategy implements FileProcessingStrategy {
 
-	public String processFile(File f, Map<String, String> hm) {
-		byte[] buffer = new byte[(int) f.length()];
-		
+	public void processFile(File f, Map<String, String> hm, OutputStream out) {
 		try {
-			BufferedInputStream inputstream = new BufferedInputStream(new FileInputStream(f));
-			inputstream.read(buffer);
-		} catch (IOException e) {
-			return null;
+			FileInputStream file = new FileInputStream(f);
+			byte[] buffer = new byte[1000];
+			while (file.available()>0) 
+				out.write(buffer, 0, file.read(buffer));
 		}
-		
-		return new String(buffer);
+		catch(IOException e){
+		}
 	}
 
 	public String getContentType(File f) {

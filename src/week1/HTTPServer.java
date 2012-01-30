@@ -90,9 +90,6 @@ public class HTTPServer {
 				strategy = fileStrategies.get(inputtype);
 			else
 				strategy = fileStrategies.get("default");
-				
-			String response = strategy.processFile(f, map);
-			log(con, "Response: " + response);
 			String contenttype = strategy.getContentType(f);
 			
 			pout.print("HTTP/1.0 200 OK\r\n");
@@ -100,7 +97,7 @@ public class HTTPServer {
 				pout.print("Content-Type: "+contenttype+"\r\n");
 			pout.print("Date: "+new Date() + "\r\n"+
 					"Server: dDist HTTPServer 1.0\r\n\r\n");
-			pout.print(response);
+			strategy.processFile(f, map, out);
 			log(con, "200 OK");
 		}
 		catch(FileNotFoundException e){

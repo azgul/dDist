@@ -1,14 +1,15 @@
 package week1;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.OutputStream;
+import java.util.Map;
 
 /**
  *
  * @author Randi K. Hillerøe <silwing@gmail.com>
  */
 public interface FileProcessingStrategy {
-	public String processFile(File f, Map<String, String> args);
+	public void processFile(File f, Map<String, String> args, OutputStream out);
 	
 	/**
 	 * Defines the content type this strategy returns

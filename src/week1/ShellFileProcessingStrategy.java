@@ -4,13 +4,9 @@
  */
 package week1;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  *
@@ -18,7 +14,7 @@ import java.util.Map;
  */
 public class ShellFileProcessingStrategy implements FileProcessingStrategy {
 
-	public String processFile(File f, Map<String, String> args) {
+	public void processFile(File f, Map<String, String> args, OutputStream out) {
 		// Create an arraylist which will eventually contain the path to our shell-script and it arguments
 		ArrayList<String> callString = new ArrayList<String>();
 		
@@ -48,13 +44,11 @@ public class ShellFileProcessingStrategy implements FileProcessingStrategy {
 			
 			r.close();
 				
-			return sb.toString();
+			PrintStream pout = new PrintStream(out);
+			pout.print(sb.toString());
 		}catch (IOException e){
 			// IOException
 		}
-		
-		// Some error occured
-		return "";
 	}
 	
 	public String getContentType(File f){
