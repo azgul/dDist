@@ -1,6 +1,7 @@
 package week1;
 
 import java.io.*;
+import java.util.*;
 
 /**
  *
@@ -9,7 +10,7 @@ import java.io.*;
 public class GeneralFileProcessingStrategy implements FileProcessingStrategy {
 
 	@Override
-	public String processFile(File f) {
+	public String processFile(File f, HashMap<String, String> hm) {
 		byte[] buffer = new byte[(int) f.length()];
 		BufferedInputStream inputstream = null;
 		
