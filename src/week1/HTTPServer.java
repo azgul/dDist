@@ -10,6 +10,7 @@ import java.util.*;
 public class HTTPServer {
 	int port;
 	String wwwhome;
+	Map<String,FileProcessingStrategy> fileStrategies;
 	
 	Socket con;
 	BufferedReader in;
@@ -19,6 +20,10 @@ public class HTTPServer {
 	HTTPServer(int p, String www) {
 		port = p;
 		wwwhome = www;
+		fileStrategies = new HashMap<String,FileProcessingStrategy>();
+		fileStrategies.put("application/x-shar", new ShellFileProcessingStrategy());
+		GeneralFileProcessingStrategy general = new GeneralFileProcessingStrategy();
+		fileStrategies.put("default", general);
 	}
 	
 	public static void main(String[] args) {
@@ -70,10 +75,38 @@ public class HTTPServer {
 	
 	private void doGet(String request) {
 		String[] parts = request.split(" ");
-		String[] path = parts[1].split("?");
-		Map<String,String> map = makeMap(path[1]);
+		String[] path = parts[1].split("\\?");
+		Map<String,String> map;
+		if(path.length > 1)
+			map = makeMap(path[1]);
+		else
+			map = new HashMap<String,String>();
 		
-		
+		try {
+			File f = getFile(path[0]);
+			String inputtype = URLConnection.guessContentTypeFromName(f.getPath());
+			FileProcessingStrategy strategy;
+			if(fileStrategies.containsKey(inputtype))
+				strategy = fileStrategies.get(inputtype);
+			else
+				strategy = fileStrategies.get("default");
+				
+			String response = strategy.processFile(f, map);
+			log(con, "Response: " + response);
+			String contenttype = strategy.getContentType(f);
+			
+			pout.print("HTTP/1.0 200 OK\r\n");
+			if (contenttype!=null) 
+				pout.print("Content-Type: "+contenttype+"\r\n");
+			pout.print("Date: "+new Date() + "\r\n"+
+					"Server: dDist HTTPServer 1.0\r\n\r\n");
+			pout.print(response);
+			log(con, "200 OK");
+		}
+		catch(FileNotFoundException e){
+			errorReport(pout, con, "404", "Not Found",
+							"The requested URL was not found on this server.");
+		}
 	}
 	
 	private void doPost(String request) {
@@ -85,9 +118,30 @@ public class HTTPServer {
 		Map<String,String> map = new HashMap<String,String>();
 		for(String part : parts){
 			String[] keyValue = part.split("=");
-			map.put(keyValue[0], keyValue[1]);
+			if(keyValue.length > 1)
+				map.put(keyValue[0], keyValue[1]);
+			else
+				map.put(keyValue[0], "");
 		}
 		return map;
+	}
+	
+	private File getFile(String path) throws FileNotFoundException {
+		path = wwwhome+path;
+		File f = new File(path);
+		
+		// Check for directory and get index file
+		if(f.isDirectory()){
+			if(!path.endsWith("/"))
+				path = path + "/";
+			path = path + "index.html";
+			f = new File(path);
+		}
+		
+		if(f.exists())
+			return f;
+		
+		throw new FileNotFoundException();
 	}
 	
 	private void processRequest(String request) 
@@ -104,7 +158,7 @@ public class HTTPServer {
 		if(request.startsWith("GET"))
 			doGet(request);
 		
-		if (!request.startsWith("GET") || 
+		/*if (!request.startsWith("GET") || 
 				request.length()<14 || 
 				!(request.endsWith("HTTP/1.0") || request.endsWith("HTTP/1.1")) || 
 				request.charAt(4) != '/'){
@@ -145,7 +199,7 @@ public class HTTPServer {
 							"The requested URL was not found on this server.");
 				}
 			}
-		} 
+		} */
 	}
 	
 	private boolean isValidRequest(String request){

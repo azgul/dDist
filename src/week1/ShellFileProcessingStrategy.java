@@ -18,8 +18,7 @@ import java.util.Map;
  */
 public class ShellFileProcessingStrategy implements FileProcessingStrategy {
 
-	@Override
-	public String processFile(File f, HashMap<String, String> args) {
+	public String processFile(File f, Map<String, String> args) {
 		// Create an arraylist which will eventually contain the path to our shell-script and it arguments
 		ArrayList<String> callString = new ArrayList<String>();
 		
@@ -58,4 +57,7 @@ public class ShellFileProcessingStrategy implements FileProcessingStrategy {
 		return "";
 	}
 	
+	public String getContentType(File f){
+		return "text/html";
+	}
 }

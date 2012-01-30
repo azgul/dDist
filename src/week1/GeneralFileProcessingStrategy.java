@@ -2,6 +2,8 @@ package week1;
 
 import java.io.*;
 import java.util.*;
+import java.io.*;
+import java.net.URLConnection;
 
 /**
  *
@@ -9,12 +11,11 @@ import java.util.*;
  */
 public class GeneralFileProcessingStrategy implements FileProcessingStrategy {
 
-	@Override
-	public String processFile(File f, HashMap<String, String> hm) {
+	public String processFile(File f, Map<String, String> hm) {
 		byte[] buffer = new byte[(int) f.length()];
-		BufferedInputStream inputstream = null;
 		
 		try {
+			BufferedInputStream inputstream = new BufferedInputStream(new FileInputStream(f));
 			inputstream.read(buffer);
 		} catch (IOException e) {
 			return null;
@@ -22,5 +23,10 @@ public class GeneralFileProcessingStrategy implements FileProcessingStrategy {
 		
 		return new String(buffer);
 	}
+
+	public String getContentType(File f) {
+		return URLConnection.guessContentTypeFromName(f.getPath());
+	}
+	
 	
 }
