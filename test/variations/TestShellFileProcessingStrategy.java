@@ -16,10 +16,12 @@ import week1.ShellFileProcessingStrategy;
  */
 public class TestShellFileProcessingStrategy {
 	private ShellFileProcessingStrategy s;
+	private HashMap<String, String> args;
 	
 	@Before
 	public void setup(){
 		s = new ShellFileProcessingStrategy();
+		args = new HashMap<String, String>();
 	}
 	
 	@Test
@@ -27,8 +29,7 @@ public class TestShellFileProcessingStrategy {
 		String expectedOutput = "Success!";
 		
 		File f = new File("test/variations/simple-shell.sh");
-		HashMap<String, String> h = new HashMap<String, String>();
-		String output = s.processFile(f, h);
+		String output = s.processFile(f, args);
 		
 		assertEquals("Output doesn't match", expectedOutput, output);
 	}
@@ -39,12 +40,23 @@ public class TestShellFileProcessingStrategy {
 		String expectedOutput = "Output: "+argument;
 		
 		File f = new File("test/variations/argumented-shell.sh");
-		HashMap<String, String> h = new HashMap<String, String>();
 		
-		h.put("name", argument);
+		args.put("name", argument);
 		
-		String output = s.processFile(f, h);
+		String output = s.processFile(f, args);
 		
-		assertEquals("Output doesn't match.", expectedOutput, output);
+		assertEquals("Argumented output doesn't match.", expectedOutput, output);
+	}
+	
+	@Test
+	public void shouldReturnMultilineEchoedOutput(){
+		File f = new File("test/variations/multiline-shell.sh");
+		
+		String expectedOutput = "Line 1\nLine 2";
+		String output = s.processFile(f, args);
+		
+		System.out.println(output);
+		
+		assertEquals("Multiline output doesn't match.", expectedOutput, output);
 	}
 }

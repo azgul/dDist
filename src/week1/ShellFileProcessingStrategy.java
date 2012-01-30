@@ -27,9 +27,9 @@ public class ShellFileProcessingStrategy implements FileProcessingStrategy {
 		callString.add(f.getAbsolutePath());
 		
 		// Add all of our arguments (if any)
-		for(String v : args.values()){
+		for(String v : args.values())
 			callString.add(v);
-		}
+		
 		
 		// Create a processbuilder which will
 		ProcessBuilder pb = new ProcessBuilder(callString);
@@ -40,8 +40,14 @@ public class ShellFileProcessingStrategy implements FileProcessingStrategy {
 			BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
 			StringBuilder sb = new StringBuilder();
 			String line;
-			while((line = r.readLine()) != null)
+			while((line = r.readLine()) != null){
 				sb.append(line);
+				sb.append("\n");
+			}
+			
+			sb.deleteCharAt(sb.length()-1);
+			
+			r.close();
 				
 			return sb.toString();
 		}catch (IOException e){
