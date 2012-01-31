@@ -15,12 +15,13 @@
 
   <target name="help">
     <echo>
-HotCiv build management.
+dDist build management.
   Targets:
-    buildSrc:      Builds production code.
-    clean:         Removes all bytecode.
+    buildSrc:       Builds production code.
+    clean:          Removes all bytecode.
 
-    runWebServer:          Run the webserver using port 1337 and folder wwwroot
+    runWebServer:   Run the webserver using port 1337 and folder wwwroot
+	testAll:        Run all jUnit tests
     </echo>
   </target>
 

@@ -28,7 +28,7 @@ public class HTTPServer {
 	
 	public static void main(String[] args) {
 		if (args.length!=2) {
-			System.out.println("Usage: java FileServer <port> <wwwhome>");
+			System.out.println("Usage: java HTTPServer <port> <wwwhome>");
 			System.exit(-1);
 		}
 		int port = Integer.parseInt(args[0]);
@@ -45,7 +45,7 @@ public class HTTPServer {
 			System.err.println("Could not start server: "+e);
 			System.exit(-1);
 		}
-		System.out.println("FileServer accepting connections on port "+ port);
+		System.out.println("AwesomeServer accepting connections on port "+ port);
 		
 		while (true) {
 			try {
