@@ -159,7 +159,7 @@ public class HTTPServer {
 	private boolean isValidRequest(String request){
 		
 		// Check for valid method types
-		if(!request.startsWith("POST") && !request.startsWith("GET")){
+		if(!request.startsWith("GET")){
 			return false;
 		}
 		
