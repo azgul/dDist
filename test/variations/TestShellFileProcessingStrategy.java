@@ -4,8 +4,11 @@
  */
 package variations;
 
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.HashMap;
+import java.util.Map;
 import org.junit.*;
 import static org.junit.Assert.*;
 import week1.ShellFileProcessingStrategy;
@@ -16,7 +19,7 @@ import week1.ShellFileProcessingStrategy;
  */
 public class TestShellFileProcessingStrategy {
 	private ShellFileProcessingStrategy s;
-	private HashMap<String, String> args;
+	private Map<String, String> args;
 	
 	@Before
 	public void setup(){
@@ -29,9 +32,10 @@ public class TestShellFileProcessingStrategy {
 		String expectedOutput = "Success!";
 		
 		File f = new File("test/variations/simple-shell.sh");
-		String output = s.processFile(f, args);
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		s.processFile(f, args, output);
 		
-		assertEquals("Output doesn't match", expectedOutput, output);
+		assertEquals("Output doesn't match", expectedOutput, output.toString());
 	}
 	
 	@Test
@@ -43,9 +47,10 @@ public class TestShellFileProcessingStrategy {
 		
 		args.put("name", argument);
 		
-		String output = s.processFile(f, args);
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		s.processFile(f, args, output);
 		
-		assertEquals("Argumented output doesn't match.", expectedOutput, output);
+		assertEquals("Argumented output doesn't match.", expectedOutput, output.toString());
 	}
 	
 	@Test
@@ -53,10 +58,9 @@ public class TestShellFileProcessingStrategy {
 		File f = new File("test/variations/multiline-shell.sh");
 		
 		String expectedOutput = "Line 1\nLine 2";
-		String output = s.processFile(f, args);
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		s.processFile(f, args, output);
 		
-		System.out.println(output);
-		
-		assertEquals("Multiline output doesn't match.", expectedOutput, output);
+		assertEquals("Multiline output doesn't match.", expectedOutput, output.toString());
 	}
 }
