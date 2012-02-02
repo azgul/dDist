@@ -62,7 +62,11 @@ public class HTTPServer {
 				pout.flush();
 			} catch (IOException e) {
 				System.err.println(e);
+			} catch (Exception e){
+				errorReport(pout, con, "500", "Internal Server Error",
+						"An error occured.");
 			}
+			
 			try {
 				if (con!= null) {
 					con.close();
@@ -144,35 +148,27 @@ public class HTTPServer {
 	private void processRequest(String request) 
 			throws IOException {
 		
-		if(!isValidRequest(request)){
+		// Check for uri starting with /
+		String[] parts = request.split(" ");
+		if(!parts[1].startsWith("/")){
 			errorReport(pout, con, "400", "Bad Request", 
 					"Your Browser sent a request that this server could not understand.");
 		}
+		
+		// Check for unimplemented methods
+		if(!request.startsWith("GET"))
+			errorReport(pout, con, "501", "Not Implemented",
+					"Request method was not implemented.");
+		
+		if(parts[1].contains("../") || parts[1].startsWith("~"))
+			errorReport(pout, con, "403", "Forbidden",
+					"Forbidden resource requested.");
 		
 		if(request.startsWith("POST"))
 			doPost(request);
 		
 		if(request.startsWith("GET"))
 			doGet(request);
-	}
-	
-	private boolean isValidRequest(String request){
-		
-		// Check for valid method types
-		if(!request.startsWith("GET")){
-			return false;
-		}
-		
-		// Check for valid HTTP version
-		if(!request.endsWith("HTTP/1.0") && !request.endsWith("HTTP/1.1"))
-			return false;
-		
-		// Check that the requested path starts with a /
-		String[] parts = request.split(" ");
-		if(!parts[1].startsWith("/"))
-			return false;
-		
-		return true;
 	}
 	
 	private void log (Socket con, String msg) {
