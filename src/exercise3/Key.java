@@ -7,7 +7,11 @@ package exercise3;
 public class Key {
 	private int id;
 	
-	public Key(int i){
-		id = i;
+	public Key(){
+		id = Helper.random();
+	}
+	
+	public int getId(){
+		return id;
 	}
 }

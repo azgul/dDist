@@ -6,8 +6,18 @@ package exercise3;
  */
 public class Node {
 	private int id;
+	private Node successor;
+	private Node predecessor;
 	
-	public Node(int i){
-		id = i;
+	
+	public Node(){
+		id = Helper.random();
+	}
+	
+	public Node lookup(Key key){
+		if(Helper.between(key.getId(), predecessor.id, id))
+			return this;
+		else
+			return successor.lookup(key);
 	}
 }
