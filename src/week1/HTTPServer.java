@@ -75,8 +75,6 @@ public class HTTPServer {
 			} catch (IOException e) {
 				System.err.println(e);
 			} catch (Exception e){
-				e.printStackTrace();
-				log(con, e.getClass().getName());
 				errorReport(pout, con, "500", "Internal Server Error",
 						"An error occured.");
 			}
