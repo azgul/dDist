@@ -126,54 +126,14 @@ public class HTTPServer {
 	}
 	
 	private boolean processAsObject(String[] path, Map<String,String> map){
-		try {
-			// See if an objects matches
-			String[] pathParts = path[0].split("/");
-			String cls = pathParts[0];
-			String method = pathParts[2];
-			int id = Integer.getInteger(pathParts[1]);
-			if(objects.containsKey(cls))
-			{
-				Object o;
-				if(objects.get(cls).size() >= id)
-					o = objects.get(cls).get(id);
-				else
-					return false;
-				
-				Map<String,Object> args = parseMapTypes(map);
-				Method m = o.getClass().getMethod(method, getArgTypes(args));
-				m.invoke(o, (Object)args.values());
-			}
-		}catch(Exception e){
-			return false;
-		}
+		String[] pathParts = path[0].split("/");
+		String cls = pathParts[0];
+		String method = pathParts[2];
+		int id = Integer.getInteger(pathParts[1]);
+		
+		
 		
 		return false;
-	}
-	
-	private Class[] getArgTypes(Map<String,Object> map){
-		Class[] classes = new Class[map.size()];
-		int i = 0;
-		for(Map.Entry<String,Object> arg : map.entrySet()){
-			classes[i] = arg.getValue().getClass();
-			i++;
-		}
-		return classes;
-	}
-	
-	private Map<String,Object> parseMapTypes(Map<String,String> map){
-		Map<String,Object> ret = new HashMap<String,Object>();
-		
-		for(Map.Entry<String,String> arg : map.entrySet()){
-			try{
-				double d = Double.parseDouble(arg.getValue());
-				ret.put(arg.getKey(), d);
-			}catch(NumberFormatException e){
-				ret.put(arg.getKey(), arg.getValue());
-			}
-		}
-		
-		return ret;
 	}
 	
 	private void doPost(String request) {
