@@ -12,7 +12,8 @@ public class HTTPServer {
 	int port;
 	String wwwhome;
 	Map<String,FileProcessingStrategy> fileStrategies;
-	Map<String,List<Object>> objects;
+	Map<String,ObjectProcessingStrategy> objectStrategies;
+	
 	
 	Socket con;
 	BufferedReader in;
@@ -27,14 +28,8 @@ public class HTTPServer {
 		GeneralFileProcessingStrategy general = new GeneralFileProcessingStrategy();
 		fileStrategies.put("default", general);
 		
-		// Create available object list
-		objects = new HashMap<String,List<Object>>();
-		List banks = new ArrayList<BankInterface>();
-		BankInterface firstBank = new Bank();
-		banks.add(firstBank);
-		objects.put("Bank", banks);
-		List accounts = new ArrayList<AccountInterface>();
-		objects.put("Account", accounts);
+		objectStrategies = new HashMap<>();
+		objectStrategies.put("default", new BankObjectProcessingStrrategy());
 	}
 	
 	public static void main(String[] args) {
@@ -74,6 +69,7 @@ public class HTTPServer {
 			} catch (IOException e) {
 				System.err.println(e);
 			} catch (Exception e){
+				e.printStackTrace();
 				errorReport(pout, con, "500", "Internal Server Error",
 						"An error occured.");
 			}
@@ -117,77 +113,8 @@ public class HTTPServer {
 			log(con, "200 OK");
 		}
 		catch(FileNotFoundException e){
-			if(!processAsObject(path, map)){
-				errorReport(pout, con, "404", "Not Found",
-							"The requested URL was not found on this server.");
-			}
-		}
-	}
-	
-	private boolean processAsObject(String[] path, Map<String,String> map){
-		String[] pathParts = path[0].split("\\/");
-		String cls = pathParts[1];
-		if(!objects.containsKey(cls))
-			return false;
-		String method = pathParts[3];
-		int id = Integer.parseInt(pathParts[2]);
-		String code = "200 OK";
-		String body = "";
-		
-		if(cls.equals("Bank"))
-		{
-			if(id < objects.get("Bank").size()){
-				Bank bank = (Bank)objects.get("Bank").get(id);
-				if(method.equals("getAccount")){
-					// do some more stuff here
-					Account account = bank.getAccount(map.get("name"));
-					if(objects.get("Account").contains(account)){
-						body = "" + objects.get("Account").indexOf(account);
-					}
-					else{
-						objects.get("Account").add(account);
-						body = "" + (objects.get("Account").size()-1);
-						code = "201 Created";
-					}
-				}
-			}else{
-				body = "No such bank.";
-				code = "404 Not Found";
-			}
-		}
-		else if(cls.equals("Account")) {
-			if(id < objects.get("Account").size()){
-				Account account = (Account)objects.get("Account").get(id);
-				if(method.equals("getName")){
-					body = account.getName();
-				}
-				else if(method.equals("getBalance")) {
-					body = "" + account.getBalance();
-				}
-				else if(method.equals("deposit")){
-					account.deposit(Double.parseDouble(map.get("amount")));
-					body = "Deposit successful.";
-				}
-				else if(method.equals("withdraw")){
-					account.withdraw(Double.parseDouble(map.get("amount")));
-					body = "Withdraw successful.";
-				}
-			}else{
-				body = "No such account.";
-				code = "404 Not Found";
-			}
-		}
-		
-		if(body.isEmpty())
-			return false;
-		else{			
-			pout.print("HTTP/1.0 "+ code +"\r\n");
-			pout.print("Content-Type: text/plain\r\n");
-			pout.print("Date: "+new Date() + "\r\n"+
-					"Server: dDist HTTPServer 1.0\r\n\r\n");
-			pout.print(body);
-			log(con, code);
-			return true;
+			ObjectProcessingStrategy strategy = objectStrategies.get("default");
+			strategy.process(path, map, out);
 		}
 	}
 	
@@ -269,6 +196,7 @@ public class HTTPServer {
 				con.getLocalAddress().getHostName()+
 				" Port"+con.getLocalPort()+"</address>\r\n"+
 				"</body>\r\n</html>\r\n");
+		pout.flush();
 		log(con, code+" "+title);
 	}
 }
