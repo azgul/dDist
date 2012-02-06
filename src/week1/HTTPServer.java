@@ -11,6 +11,7 @@ public class HTTPServer {
 	int port;
 	String wwwhome;
 	Map<String,FileProcessingStrategy> fileStrategies;
+	Map<String,List<Object>> objects;
 	
 	Socket con;
 	BufferedReader in;
@@ -24,6 +25,15 @@ public class HTTPServer {
 		fileStrategies.put("application/x-shar", new ShellFileProcessingStrategy());
 		GeneralFileProcessingStrategy general = new GeneralFileProcessingStrategy();
 		fileStrategies.put("default", general);
+		
+		// Create available object list
+		objects = new HashMap<String,List<Object>>();
+		List banks = new ArrayList<BankInterface>();
+		BankInterface firstBank = new Bank();
+		banks.add(firstBank);
+		objects.put("Bank", banks);
+		List accounts = new ArrayList<AccountInterface>();
+		objects.put("Account", accounts);
 	}
 	
 	public static void main(String[] args) {
