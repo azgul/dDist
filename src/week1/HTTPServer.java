@@ -2,7 +2,7 @@ package week1;
 
 import java.net.*;
 import java.io.*;
-import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.util.*;
 import week2.*;
 /**
@@ -75,6 +75,8 @@ public class HTTPServer {
 			} catch (IOException e) {
 				System.err.println(e);
 			} catch (Exception e){
+				e.printStackTrace();
+				log(con, e.getClass().getName());
 				errorReport(pout, con, "500", "Internal Server Error",
 						"An error occured.");
 			}
@@ -126,14 +128,70 @@ public class HTTPServer {
 	}
 	
 	private boolean processAsObject(String[] path, Map<String,String> map){
-		String[] pathParts = path[0].split("/");
-		String cls = pathParts[0];
-		String method = pathParts[2];
-		int id = Integer.getInteger(pathParts[1]);
+		String[] pathParts = path[0].split("\\/");
+		String cls = pathParts[1];
+		if(!objects.containsKey(cls))
+			return false;
+		String method = pathParts[3];
+		int id = Integer.parseInt(pathParts[2]);
+		String code = "200 OK";
+		String body = "";
 		
+		if(cls.equals("Bank"))
+		{
+			if(id < objects.get("Bank").size()){
+				Bank bank = (Bank)objects.get("Bank").get(id);
+				if(method.equals("getAccount")){
+					// do some more stuff here
+					Account account = bank.getAccount(map.get("name"));
+					if(objects.get("Account").contains(account)){
+						body = "" + objects.get("Account").indexOf(account);
+					}
+					else{
+						objects.get("Account").add(account);
+						body = "" + (objects.get("Account").size()-1);
+						code = "201 Created";
+					}
+				}
+			}else{
+				body = "No such bank.";
+				code = "404 Not Found";
+			}
+		}
+		else if(cls.equals("Account")) {
+			if(id < objects.get("Account").size()){
+				Account account = (Account)objects.get("Account").get(id);
+				if(method.equals("getName")){
+					body = account.getName();
+				}
+				else if(method.equals("getBalance")) {
+					body = "" + account.getBalance();
+				}
+				else if(method.equals("deposit")){
+					account.deposit(Double.parseDouble(map.get("amount")));
+					body = "Deposit successful.";
+				}
+				else if(method.equals("withdraw")){
+					account.withdraw(Double.parseDouble(map.get("amount")));
+					body = "Withdraw successful.";
+				}
+			}else{
+				body = "No such account.";
+				code = "404 Not Found";
+			}
+		}
 		
-		
-		return false;
+		if(body.isEmpty())
+			return false;
+		else{			
+			pout.print("HTTP/1.0 "+ code +"\r\n");
+			pout.print("Content-Type: text/plain\r\n");
+			pout.print("Date: "+new Date() + "\r\n"+
+					"Server: dDist HTTPServer 1.0\r\n\r\n");
+			pout.print(body);
+			log(con, code);
+			return true;
+		}
 	}
 	
 	private void doPost(String request) {
@@ -146,7 +204,7 @@ public class HTTPServer {
 		for(String part : parts){
 			String[] keyValue = part.split("=");
 			if(keyValue.length > 1)
-				map.put(keyValue[0], keyValue[1]);
+				map.put(keyValue[0], URLDecoder.decode(keyValue[1]));
 			else
 				map.put(keyValue[0], "");
 		}
