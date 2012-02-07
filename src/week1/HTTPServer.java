@@ -28,7 +28,7 @@ public class HTTPServer {
 		GeneralFileProcessingStrategy general = new GeneralFileProcessingStrategy();
 		fileStrategies.put("default", general);
 		
-		objectStrategies = new HashMap<>();
+		objectStrategies = new HashMap<String,ObjectProcessingStrategy>();
 		objectStrategies.put("default", new BankObjectProcessingStrrategy());
 	}
 	

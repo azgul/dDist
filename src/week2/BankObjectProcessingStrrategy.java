@@ -18,12 +18,12 @@ public class BankObjectProcessingStrrategy implements ObjectProcessingStrategy{
 	
 	public BankObjectProcessingStrrategy(){
 		// Create available object list
-		objects = new HashMap<>();
-		List banks = new ArrayList<>();
+		objects = new HashMap<String,List<Object>>();
+		List banks = new ArrayList<Bank>();
 		BankInterface firstBank = new Bank();
 		banks.add(firstBank);
 		objects.put("Bank", banks);
-		List accounts = new ArrayList<>();
+		List accounts = new ArrayList<Account>();
 		objects.put("Account", accounts);
 	}
 	
