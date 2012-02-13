@@ -11,7 +11,7 @@ import multicast.MulticastQueueFifoOnly;
 public class MultiChat {
 	InetAddress host;
 	int port = 1337;
-	final MulticastQueueFifoOnly<Integer> queue = new MulticastQueueFifoOnly<Integer>();
+	public final MulticastQueueFifoOnly<Integer> queue = new MulticastQueueFifoOnly<Integer>();
 			
 	public void main(String[] args) throws UnknownHostException {
 		if (args.length >= 1)
@@ -22,6 +22,6 @@ public class MultiChat {
 	
 	public void initServer() throws UnknownHostException{
 		host = InetAddress.getLocalHost();
-		
+		queue.createGroup(port, host);
 	}
 }
