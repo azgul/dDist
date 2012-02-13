@@ -2,6 +2,7 @@ package week3;
 
 import java.io.IOException;
 import java.net.*;
+import java.util.*;
 import multicast.*;
 
 
@@ -10,9 +11,9 @@ import multicast.*;
  * @author Martin
  */
 public class MultiChat {
-	InetAddress host;
-	int port = 1337;
-	private final MulticastQueueFifoOnly<Integer> queue = new MulticastQueueFifoOnly<Integer>();
+	private int port = 1337;
+	private final MulticastChatQueue<String> queue = new MulticastChatQueue<String>();
+	private ChatListener listener;
 			
 	public void main(String[] args) throws UnknownHostException, IOException {
 		if (args.length >= 1)
@@ -20,8 +21,25 @@ public class MultiChat {
 		else if (args.length == 0) 
 			initServer();
 		
-		ChatListener listener = new ChatListener(queue);
+		listener = new ChatListener(queue);
 		listener.run();
+		
+		listen();
+	}
+	
+	private void listen() {
+		String msg;
+		Scanner in = new Scanner(System.in);
+		while (true) {
+			if ((msg = in.nextLine()) != null) {
+				if (msg.toLowerCase().equals("exit")) {
+					listener.interrupt();
+					queue.leaveGroup();
+				} else {
+					queue.put(msg);
+				}
+			}
+		}
 	}
 	
 	private void initClient(String host) throws IOException {
@@ -29,7 +47,6 @@ public class MultiChat {
 	}
 	
 	private void initServer() throws UnknownHostException, IOException{
-		host = InetAddress.getLocalHost();
 		queue.createGroup(port, MulticastQueue.DeliveryGuarantee.FIFO);
 	}
 }
