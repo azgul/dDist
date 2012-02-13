@@ -18,7 +18,7 @@ public class PointToPointQueueReceiverEndNonRobust<E extends Serializable>
     extends Thread 
     implements PointToPointQueueReceiverEnd<E> {
 
-    PointToPointQueueReceiverEndNonRobust() {
+    public PointToPointQueueReceiverEndNonRobust() {
 	this.pendingObjects = new ConcurrentLinkedQueue<E>();
     }
 
