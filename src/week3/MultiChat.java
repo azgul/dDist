@@ -19,6 +19,9 @@ public class MultiChat {
 			initClient(args[0]);
 		else if (args.length == 0) 
 			initServer();
+		
+		ChatListener listener = new ChatListener(queue);
+		listener.run();
 	}
 	
 	private void initClient(String host) throws IOException {
