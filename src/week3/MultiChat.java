@@ -14,17 +14,39 @@ public class MultiChat {
 	private int port = 1337;
 	private final MulticastChatQueue<String> queue = new MulticastChatQueue<String>();
 	private ChatListener listener;
-			
-	public void main(String[] args) throws UnknownHostException, IOException {
-		if (args.length >= 1)
-			initClient(args[0]);
-		else if (args.length == 0) 
+	
+	public MultiChat(){
+		try{
 			initServer();
-		
+		}catch(UnknownHostException e){
+			System.err.println("Fix y0 host kthxplz");
+		}catch(IOException e){
+			System.err.println("Server IOException y0");
+			e.printStackTrace();
+		}
+	}
+	
+	public MultiChat(String host){
+		try{
+		initClient(host);
+		}catch(IOException e){
+			System.err.println("IOException y0");
+		}
+	}
+	
+	private void start(){
 		listener = new ChatListener(queue);
 		listener.run();
 		
 		listen();
+	}
+			
+	public static void main(String[] args){
+		MultiChat mc;
+		if (args.length >= 1)
+			mc = new MultiChat(args[0]);
+		else if (args.length == 0) 
+			mc = new MultiChat();
 	}
 	
 	private void listen() {
