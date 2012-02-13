@@ -82,21 +82,21 @@ class MulticastQueueFifoOnlyTest {
 		    boolean[] received = new boolean[testSize];
 		    MulticastMessage msg;
 		    while ((msg = peer[p].get()) != null) {
-			System.out.println("       " + msg);
-			if (msg instanceof MulticastMessagePayload) {
-			    int theInt = ((MulticastMessagePayload<Integer>)msg).getPayload().intValue();
-			    if (received[theInt]==true) {
-				System.out.println("Test result: FAIL!\n   Reason: Peer " + p + " received " + theInt + " twice");
-				System.exit(-1);
-			    } 
-			    received[theInt]=true;
-			}
+				System.out.println("       " + msg);
+				if (msg instanceof MulticastMessagePayload) {
+					int theInt = ((MulticastMessagePayload<Integer>)msg).getPayload().intValue();
+					if (received[theInt]==true) {
+						System.out.println("Test result: FAIL!\n   Reason: Peer " + p + " received " + theInt + " twice");
+						System.exit(-1);
+					} 
+					received[theInt]=true;
+				}
 		    }
 		    for (int i=0; i<testSize; i++) {
-			if (received[i]==false) {
-			    System.out.println("Test result: FAIL!\n   Reason: Peer " + p + " did not receive " + i);
-			    System.exit(-1);
-			} 			
+				if (received[i]==false) {
+					System.out.println("Test result: FAIL!\n   Reason: Peer " + p + " did not receive " + i);
+					System.exit(-1);
+				} 			
 		    }
 		}
 

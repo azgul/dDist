@@ -8,21 +8,21 @@ import java.io.Serializable;
  *
  * @author Jesper Buus Nielsen, Aarhus University, 2012.
  */
-class MulticastMessage implements Serializable {
+public class MulticastMessage implements Serializable {
     private InetSocketAddress sender;
     /**
      * @param sender The sender of the message.
      */
-    MulticastMessage(InetSocketAddress sender) {
-	this.sender = sender;
+    public MulticastMessage(InetSocketAddress sender) {
+		this.sender = sender;
     }
     /**
      * @return The sender of the message.
      */
     public InetSocketAddress getSender() {
-	return sender;
+		return sender;
     }
     public String toString() {
-	return "(MulticastMessage from " + sender + ")";
+		return "(MulticastMessage from " + sender + ")";
     }
 }
