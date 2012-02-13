@@ -1,7 +1,8 @@
 package week3;
 
+import java.io.IOException;
 import java.net.*;
-import multicast.MulticastQueueFifoOnly;
+import multicast.*;
 
 
 /**
@@ -11,17 +12,21 @@ import multicast.MulticastQueueFifoOnly;
 public class MultiChat {
 	InetAddress host;
 	int port = 1337;
-	public final MulticastQueueFifoOnly<Integer> queue = new MulticastQueueFifoOnly<Integer>();
+	private final MulticastQueueFifoOnly<Integer> queue = new MulticastQueueFifoOnly<Integer>();
 			
-	public void main(String[] args) throws UnknownHostException {
+	public void main(String[] args) throws UnknownHostException, IOException {
 		if (args.length >= 1)
-			return;
+			initClient(args[0]);
 		else if (args.length == 0) 
 			initServer();
 	}
 	
-	public void initServer() throws UnknownHostException{
+	private void initClient(String host) throws IOException {
+		queue.joinGroup(port, new InetSocketAddress(host, port), MulticastQueue.DeliveryGuarantee.NONE);
+	}
+	
+	private void initServer() throws UnknownHostException, IOException{
 		host = InetAddress.getLocalHost();
-		queue.createGroup(port, host);
+		queue.createGroup(port, MulticastQueue.DeliveryGuarantee.FIFO);
 	}
 }
