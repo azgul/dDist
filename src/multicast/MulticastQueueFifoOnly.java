@@ -151,8 +151,7 @@ public class MulticastQueueFifoOnly<E extends Serializable>
 	sendingThread.start();
     }
 
-    public void createGroup(int port, DeliveryGuarantee deliveryGuarantee) 
-			    throws IOException {
+    public void createGroup(int port, DeliveryGuarantee deliveryGuarantee) throws IOException {
 	assert (deliveryGuarantee==DeliveryGuarantee.NONE || 
 		deliveryGuarantee==DeliveryGuarantee.FIFO) 
 	    : "Can at best implement FIFO";

@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package week3;
+package week3.multicast.messages;
 
 import java.net.InetSocketAddress;
 import multicast.MulticastMessage;
@@ -11,10 +11,10 @@ import multicast.MulticastMessage;
  *
  * @author larss
  */
-public class MulticastChatMessage extends MulticastMessage {
+public class ChatMessage extends MulticastMessage {
 	String message;
 	
-	public MulticastChatMessage(InetSocketAddress sender, String message){
+	public ChatMessage(InetSocketAddress sender, String message){
 		super(sender);
 		this.message = message;
 	}
