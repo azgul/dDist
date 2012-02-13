@@ -18,6 +18,7 @@ public class MultiChat {
 	public MultiChat(){
 		try{
 			initServer();
+			start();
 		}catch(UnknownHostException e){
 			System.err.println("Fix y0 host kthxplz");
 		}catch(IOException e){
@@ -28,7 +29,8 @@ public class MultiChat {
 	
 	public MultiChat(String host){
 		try{
-		initClient(host);
+			initClient(host);
+			start();
 		}catch(IOException e){
 			System.err.println("IOException y0");
 		}
