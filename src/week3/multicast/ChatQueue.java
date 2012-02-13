@@ -5,11 +5,14 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import multicast.*;
-import week3.MultiChat.Messages.MulticastChatMessage;
+import week3.multicast.messages.*;
 
 
 public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
@@ -22,6 +25,12 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
      * Used to signal that the queue is leaving the peer group. 
      */
     private boolean isLeaving = false;
+	
+	/**
+     * Used to signal that no more elements will be added to the queue
+     * of pending gets.
+     */
+    private boolean noMoreGetsWillBeAdded = false;
 	
     /**
      * The thread which handles outgoing traffic.
@@ -57,80 +66,155 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
      */
     private ConcurrentLinkedQueue<String> pendingSends;
 	
+	private ArrayList<MulticastMessage> backlog;
+	
 	public ChatQueue(){
 		incoming = new PointToPointQueueReceiverEndNonRobust<MulticastMessage>();
 		pendingGets = new ConcurrentLinkedQueue<MulticastMessage>();
 		pendingSends = new ConcurrentLinkedQueue<String>();
 		outgoing = new ConcurrentHashMap<InetSocketAddress,PointToPointQueueSenderEnd<MulticastMessage>>();
+		hasConnectionToUs = new HashSet<InetSocketAddress>();
+		backlog = new ArrayList<MulticastMessage>();
+		
+		sendingThread = new SendingThread();
+		sendingThread.start();
 	}
 	
+	@Override
 	public void createGroup(int port, DeliveryGuarantee deliveryGuarantee) throws IOException {
-	assert (deliveryGuarantee==DeliveryGuarantee.NONE || 
-		deliveryGuarantee==DeliveryGuarantee.FIFO) 
-	    : "Can at best implement FIFO";
-	// Try to listen on the given port. Exception are propagated out.
-	incoming.listenOnPort(port);
+		assert (deliveryGuarantee==DeliveryGuarantee.NONE || deliveryGuarantee==DeliveryGuarantee.FIFO) : "Can at best implement FIFO";
+		
+		// Try to listen on the given port. Exception are propagated out.
+		incoming.listenOnPort(port);
 
-        // Record our address
-	InetAddress localhost = InetAddress.getLocalHost();
-	String localHostAddress = localhost.getCanonicalHostName();
-	myAddress = new InetSocketAddress(localHostAddress, port);
+		// Record our address
+		InetAddress localhost = InetAddress.getLocalHost();
+		String localHostAddress = localhost.getCanonicalHostName();
+		myAddress = new InetSocketAddress(localHostAddress, port);
 
-	// Buffer a message that we have joined the group.
-	addAndNotify(pendingGets, new MulticastMessageJoin(myAddress));
+		// Buffer a message that we have joined the group.
+		addAndNotify(pendingGets, new MulticastMessageJoin(myAddress));
 
-	// Start the receiveing thread.
-	this.start();
-    }
-
-    public void joinGroup(int port, InetSocketAddress knownPeer, 
-			  DeliveryGuarantee deliveryGuarantee) 
-			    throws IOException {
-        assert (deliveryGuarantee==DeliveryGuarantee.NONE || 
-		deliveryGuarantee==DeliveryGuarantee.FIFO) 
-	    : "Can at best implement FIFO";
-
-	// Try to listen on the given port. Exceptions are propagated
-	// out of the method.
-	incoming.listenOnPort(port);
-
-        // Record our address.
-	InetAddress localhost = InetAddress.getLocalHost();
-	String localHostAddress = localhost.getCanonicalHostName();
-	myAddress = new InetSocketAddress(localHostAddress, port);
-
-	// Make an outgoing connection to the known peer.
-	PointToPointQueueSenderEnd<MulticastMessage> out 
-	    = connectToPeerAt(knownPeer);	
-	// Send the known peer our address. 
-	MulticastQueueFifoOnly.JoinRequestMessage joinRequestMessage 
-	    = new MulticastQueueFifoOnly.JoinRequestMessage(myAddress);
-	out.put(joinRequestMessage);
-	// When the known peer receives the join request it will
-	// connect to us, so let us remember that she has a connection
-	// to us.
-	hasConnectionToUs.add(knownPeer);	
-
-	// Buffer a message that we have joined the group.
-	addAndNotify(pendingGets, new MulticastMessageJoin(myAddress));
-
-	// Start the receiving thread
-	this.start();
+		// Start the receiveing thread.
+		this.start();
     }
 
 	@Override
+    public void joinGroup(int port, InetSocketAddress knownPeer, DeliveryGuarantee deliveryGuarantee) throws IOException {
+        assert (deliveryGuarantee==DeliveryGuarantee.NONE || deliveryGuarantee==DeliveryGuarantee.FIFO) : "Can at best implement FIFO";
+
+		// Try to listen on the given port. Exceptions are propagated
+		// out of the method.
+		incoming.listenOnPort(port);
+
+        // Record our address.
+		InetAddress localhost = InetAddress.getLocalHost();
+		String localHostAddress = localhost.getCanonicalHostName();
+		myAddress = new InetSocketAddress(localHostAddress, port);
+
+		// Make an outgoing connection to the known peer.
+		PointToPointQueueSenderEnd<MulticastMessage> out = connectToPeerAt(knownPeer);	
+
+		// Send the known peer our address. 
+		JoinRequestMessage joinRequestMessage = new JoinRequestMessage(myAddress);
+		out.put(joinRequestMessage);
+		
+		// When the known peer receives the join request it will
+		// connect to us, so let us remember that she has a connection
+		// to us.
+		hasConnectionToUs.add(knownPeer);	
+
+		// Buffer a message that we have joined the group.
+		addAndNotify(pendingGets, new MulticastMessageJoin(myAddress));
+
+		// Start the receiving thread
+		this.start();
+    }
+	
+	@Override
+	public void run(){
+		MulticastMessage msg;
+		
+		/* By contract we know that msg == null only occurs if
+		* incoming is shut down, which we are the only ones that can
+		* do, so we use that as a way to kill the receiving thread
+		* when that is needed. We shut down the incoming queue when
+		* it happens that we are leaving down and all peers notified
+		* us that they shut down their connection to us, at which
+		* point no more message will be added to the incoming
+		* queue.
+		*/
+		while ((msg = incoming.get()) != null) {
+			if (msg instanceof ChatMessage) {
+				//MulticastMessagePayload pmsg = (MulticastMessagePayload)msg;
+				//handle(pmsg);
+			} else if (msg instanceof JoinRequestMessage) {
+				//JoinRequestMessage jrmsg = (JoinRequestMessage)msg;
+				//handle(jrmsg);
+			} else if (msg instanceof JoinRelayMessage) {
+				//JoinRelayMessage jmsg = (JoinRelayMessage)msg;
+				//handle(jmsg);
+			//} else if (msg instanceof WelcomeMessage) {
+				//WellcomeMessage wmsg = (WellcomeMessage)msg;
+				//handle(wmsg);
+			} else if (msg instanceof LeaveGroupMessage) {
+				//MulticastMessageLeave lmsg = (MulticastMessageLeave)msg;
+				//handle(lmsg);
+			} else if (msg instanceof BacklogRequestMessage) {
+				//GoodbuyMessage gmsg = (GoodbuyMessage)msg;
+				//handle(gmsg);
+			}
+			
+			// Save the backlog
+			backlog.add(msg);
+		}
+		/* Before we terminate we notify callers who are blocked in
+		* out get() method that no more gets will be added to the
+		* buffer pendingGets. This allows them to return with a null
+		* in case no message are in that buffer. */	
+		noMoreGetsWillBeAdded = true;
+		synchronized (pendingGets) {
+			pendingGets.notifyAll();
+		}
+	}
+
+	@Override
 	public void put(Serializable object) {
-		throw new UnsupportedOperationException("Not supported yet.");
+		String msg = (String)object;
+		synchronized(pendingSends) {
+			assert (isLeaving==false) : "Cannot put objects after calling leaveGroup()";
+			addAndNotify(pendingSends, msg);
+		}
 	}
 
 	@Override
 	public MulticastMessage get() {
-		throw new UnsupportedOperationException("Not supported yet.");
+		// Now an object is ready in pendingObjects, unless we are
+		// shutting down. 
+		synchronized (pendingGets) {
+			waitForPendingGetsOrReceivedAll();
+			if (pendingGets.isEmpty()) {
+				return null;
+				// By contract we signal shutdown by returning null.
+			} else {
+				return pendingGets.poll();
+			}
+		}
 	}
 
 	@Override
 	public void leaveGroup() {
-		throw new UnsupportedOperationException("Not supported yet.");
+		synchronized (pendingSends) {
+			assert (isLeaving != true): "Already left the group!"; 
+			sendToAll(new LeaveGroupMessage(myAddress));
+			isLeaving = true;
+			
+			// We wake up the sending thread. If pendingSends happen
+			// to be empty now, the sending thread will know that we
+			// are shutting down, so it will not starting waiting on
+			// pendingSends again.
+			pendingSends.notify();
+		}
 	}
 	
 	
@@ -139,24 +223,55 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
      * If the queue empties and leaveGroup() was called, then the
      * queue will remain empty, so we can terminate.
      */
-    public class SendingThread extends Thread {
+    private class SendingThread extends Thread {
 		public void run() {	    
-			log("starting sending thread.");
 			// As long as we are not leaving or there are objects to
 			// send, we will send them.
 			waitForPendingSendsOrLeaving();
-			Object msg;
+			String msg;
 			while ((msg = pendingSends.poll()) != null) {
-				sendToAll(new MulticastChatMessage(myAddress, (String)msg));
+				sendToAll(new ChatMessage(myAddress, msg));
 				waitForPendingSendsOrLeaving();
 			}
-			log("shutting down outgoing connections.");
 			synchronized (outgoing) {
-			for (InetSocketAddress address : outgoing.keySet()) {
-				disconnectFrom(address);
+				for (InetSocketAddress address : outgoing.keySet()) 
+					disconnectFrom(address);
 			}
+		}
+    }
+	
+	/**
+     * Used to create an outgoing queue towards the given address,
+     * including the addition of that queue to the set of queues.
+     *
+     * @param address The address of the peer we want to connect
+     *        to. Returns null when attempting to make connection to
+     *        self.
+     */
+    private PointToPointQueueSenderEnd<MulticastMessage> connectToPeerAt(InetSocketAddress address) {
+		assert (!address.equals(myAddress)) : "Cannot connect to self.";
+		
+		// Do we have a connection already?
+		PointToPointQueueSenderEnd<MulticastMessage> out = outgoing.get(address);
+		
+		assert (out == null) : "Cannot connect twice to same peer!";
+		
+		out = new PointToPointQueueSenderEndNonRobust<MulticastMessage>();
+		out.setReceiver(address);
+		
+		outgoing.put(address, out);
+		
+		return out;
+    }
+	
+	private void disconnectFrom(InetSocketAddress address) {
+		synchronized (outgoing) {
+			PointToPointQueueSenderEnd<MulticastMessage> out = outgoing.get(address);
+			if (out != null) {
+				outgoing.remove(address);
+				//out.put(new GoodbuyMessage(myAddress));
+				out.shutdown();
 			}
-			log("stopping sending thread.");
 		}
     }
 	
@@ -167,20 +282,85 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
      * multicast queue was called in leaveGroup();
      */
     private void waitForPendingSendsOrLeaving() {
-	synchronized (pendingSends) {
-	    while (pendingSends.isEmpty() && !isLeaving) {
-		try {
-		    // We will be woken up if an object arrives or we
-		    // are leaving the group. Both might be the case
-		    // at the same time.
-		    pendingSends.wait();
-		} catch (InterruptedException e) {
-		    // Probably leaving. The while condition will
-		    // ensure proper behavior in case of some other
-		    // interruption.
+		synchronized (pendingSends) {
+			while (pendingSends.isEmpty() && !isLeaving) {
+				try {
+					// We will be woken up if an object arrives or we
+					// are leaving the group. Both might be the case
+					// at the same time.
+					pendingSends.wait();
+				} catch (InterruptedException e) {
+					// Probably leaving. The while condition will
+					// ensure proper behavior in case of some other
+					// interruption.
+				}
+			}
+			// Now: pendingSends is non empty or we are leaving the group.
+		}	
+    }
+	
+	/**
+     * Will send a copy of the message to all peers who at some point
+     * sent us a wellcome message and who did not later send us a
+     * goodbuy message, unless we are leaving the peer group.
+     */
+    private void sendToAll(MulticastMessage msg) {
+		if (isLeaving!=true) {
+			/* Send to self. */
+			incoming.put(msg);
+			/* Then send to the others. */
+			sendToAllExceptMe(msg);
 		}
-	    }
-	    // Now: pendingSends is non empty or we are leaving the group.
-	}	
+    }
+    private void sendToAllExceptMe(MulticastMessage msg) {
+		if (isLeaving!=true) {
+			for (PointToPointQueueSenderEnd<MulticastMessage> out : outgoing.values()) {
+			out.put(msg);
+			}
+		}
+    }
+	
+	private void sendToRandom(MulticastMessage msg){
+		Random generator = new Random();
+		Object[] values = outgoing.values().toArray();
+		PointToPointQueueSenderEnd<MulticastMessage> randomPeer = (PointToPointQueueSenderEnd<MulticastMessage>) values[generator.nextInt(values.length)];
+		
+		randomPeer.put(msg);
+	}
+	
+	/**
+     * Used by callers to wait for objects to enter pendingGets. When
+     * the method returns, then either the collection is non-empty, or
+     * the multicast queue has seen its own leave message arrive on
+     * the incoming stream.
+     */
+    private void waitForPendingGetsOrReceivedAll() {
+		synchronized (pendingGets) {
+			while (pendingGets.isEmpty() && !noMoreGetsWillBeAdded) {
+				try {
+					// We will be woken up if an object arrives or the
+					// we received all.		     
+					pendingGets.wait();
+				} catch (InterruptedException e) {
+					// Probably shutting down. The while condition
+					// will ensure proper behavior in case of some
+					// other interruption.
+				}
+			}
+			// Now: pendingGets is non empty or we received all there
+			// is to receive.
+		}	
+    }
+
+    /**
+     * Used to add an element to a collection and wake up one thread
+     * waiting for elements on the collection.
+     */
+    private <T> void addAndNotify(Collection<T> coll, T msg) {
+		synchronized (coll) {
+			coll.add(msg);
+			// Notify that there is a new message. 
+			coll.notify();
+		}
     }
 }
