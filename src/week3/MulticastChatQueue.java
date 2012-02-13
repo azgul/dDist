@@ -194,6 +194,7 @@ public class MulticastChatQueue<E extends Serializable> extends Thread implement
 	MulticastChatQueue.JoinRequestMessage joinRequestMessage 
 	    = new MulticastChatQueue.JoinRequestMessage(myAddress);
 	out.put(joinRequestMessage);
+	
 	// When the known peer receives the join request it will
 	// connect to us, so let us remember that she has a connection
 	// to us.
@@ -575,5 +576,4 @@ public class MulticastChatQueue<E extends Serializable> extends Thread implement
     protected void log(MulticastMessage msg) {
 	if (log) System.out.println(myAddress + " received: " + msg);
     }
- 
 }
