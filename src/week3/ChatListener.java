@@ -12,7 +12,7 @@ import multicast.MulticastQueue;
  *
  * @author larss
  */
-public class ChatListener implements Runnable{
+public class ChatListener extends Thread{
 	MulticastQueue queue;
 	long timeout = 100;
 	
