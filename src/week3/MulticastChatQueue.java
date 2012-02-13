@@ -142,13 +142,13 @@ public class MulticastChatQueue<E extends Serializable> extends Thread implement
     private ConcurrentLinkedQueue<E> pendingSends;
 
     public MulticastChatQueue() {
-	incoming = new PointToPointQueueReceiverEndNonRobust<MulticastMessage>();
-	pendingGets = new ConcurrentLinkedQueue<MulticastMessage>();
-	pendingSends = new ConcurrentLinkedQueue<E>();
-	outgoing = new ConcurrentHashMap<InetSocketAddress,PointToPointQueueSenderEnd<MulticastMessage>>();
-	sendingThread = new MulticastChatQueue.SendingThread();
-	hasConnectionToUs = new HashSet<InetSocketAddress>();
-	sendingThread.start();
+		incoming = new PointToPointQueueReceiverEndNonRobust<MulticastMessage>();
+		pendingGets = new ConcurrentLinkedQueue<MulticastMessage>();
+		pendingSends = new ConcurrentLinkedQueue<E>();
+		outgoing = new ConcurrentHashMap<InetSocketAddress,PointToPointQueueSenderEnd<MulticastMessage>>();
+		sendingThread = new MulticastChatQueue.SendingThread();
+		hasConnectionToUs = new HashSet<InetSocketAddress>();
+		sendingThread.start();
     }
 
     public void createGroup(int port, MulticastQueue.DeliveryGuarantee deliveryGuarantee) 
@@ -577,4 +577,3 @@ public class MulticastChatQueue<E extends Serializable> extends Thread implement
     }
  
 }
-

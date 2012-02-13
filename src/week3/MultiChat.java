@@ -12,6 +12,7 @@ import multicast.*;
  */
 public class MultiChat {
 	private int port = 1337;
+	//private final MulticastQueueFifoOnly<String> queue = new MulticastQueueFifoOnly<String>();
 	private final MulticastChatQueue<String> queue = new MulticastChatQueue<String>();
 	private ChatListener listener;
 	
@@ -33,12 +34,13 @@ public class MultiChat {
 			start();
 		}catch(IOException e){
 			System.err.println("IOException y0");
+			e.printStackTrace();
 		}
 	}
 	
 	private void start(){
 		listener = new ChatListener(queue);
-		listener.run();
+		listener.start();
 		
 		listen();
 	}
@@ -47,11 +49,12 @@ public class MultiChat {
 		MultiChat mc;
 		if (args.length >= 1)
 			mc = new MultiChat(args[0]);
-		else if (args.length == 0) 
+		else
 			mc = new MultiChat();
 	}
 	
 	private void listen() {
+		System.out.println("Lets get this chat rollin'!");
 		String msg;
 		Scanner in = new Scanner(System.in);
 		while (true) {
@@ -59,6 +62,7 @@ public class MultiChat {
 				if (msg.toLowerCase().equals("exit")) {
 					listener.interrupt();
 					queue.leaveGroup();
+					System.exit(1);
 				} else {
 					queue.put(msg);
 				}
@@ -67,10 +71,12 @@ public class MultiChat {
 	}
 	
 	private void initClient(String host) throws IOException {
-		queue.joinGroup(port, new InetSocketAddress(host, port), MulticastQueue.DeliveryGuarantee.NONE);
+		System.out.println("Joining group~");
+		queue.joinGroup(port+1, new InetSocketAddress(host, port), MulticastQueue.DeliveryGuarantee.NONE);
 	}
 	
 	private void initServer() throws UnknownHostException, IOException{
+		System.out.println("Creating group~");
 		queue.createGroup(port, MulticastQueue.DeliveryGuarantee.FIFO);
 	}
 }

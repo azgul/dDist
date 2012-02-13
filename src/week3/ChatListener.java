@@ -14,7 +14,7 @@ import multicast.MulticastQueue;
  */
 public class ChatListener extends Thread{
 	MulticastQueue queue;
-	long timeout = 100;
+	long timeout = 1;
 	
 	public ChatListener(MulticastQueue queue){
 		this.queue = queue;
@@ -27,12 +27,13 @@ public class ChatListener extends Thread{
 		try{
 			while(true){
 				if((msg = queue.get()) != null)
-						System.out.println(msg.toString());
+					System.out.println(msg.toString());
 				
 				Thread.sleep(timeout);
 			}
 		}catch(InterruptedException e){
 			// Stop
+			System.out.println("Interrupted D:");
 		}
 	}
 	
