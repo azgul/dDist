@@ -5,6 +5,7 @@
 package week3;
 
 import multicast.MulticastMessage;
+import multicast.MulticastMessageLeave;
 import multicast.MulticastQueue;
 
 /**
@@ -26,7 +27,7 @@ public class ChatListener implements Runnable{
 		try{
 			while(true){
 				if((msg = queue.get()) != null)
-					String.format(msg.toString());
+						System.out.println(msg.toString());
 				
 				Thread.sleep(timeout);
 			}

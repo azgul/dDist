@@ -8,7 +8,7 @@ import java.net.InetSocketAddress;
  *
  * @author Jesper Buus Nielsen, Aarhus University, 2012.
  */
-class MulticastMessageLeave extends MulticastMessage {
+public class MulticastMessageLeave extends MulticastMessage {
     public MulticastMessageLeave(InetSocketAddress sender) {
 	super(sender);
     }
