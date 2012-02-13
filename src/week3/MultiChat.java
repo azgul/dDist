@@ -1,7 +1,7 @@
 package week3;
 
 import java.net.*;
-import multicast.*;
+import multicast.MulticastQueueFifoOnly;
 
 
 /**
@@ -10,17 +10,18 @@ import multicast.*;
  */
 public class MultiChat {
 	InetAddress host;
+	int port = 1337;
+	final MulticastQueueFifoOnly<Integer> queue = new MulticastQueueFifoOnly<Integer>();
 			
 	public void main(String[] args) throws UnknownHostException {
 		if (args.length >= 1)
-			
+			return;
 		else if (args.length == 0) 
 			initServer();
 	}
 	
 	public void initServer() throws UnknownHostException{
 		host = InetAddress.getLocalHost();
-		
 		
 	}
 }
