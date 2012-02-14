@@ -61,20 +61,21 @@ public class MultiChat {
 		while (true) {
 			if ((msg = in.nextLine()) != null) {
 				if (msg.toLowerCase().equals("exit")) {
-					listener.interrupt();
 					queue.leaveGroup();
-					System.exit(0);
+					listener.interrupt();
+					break;
 				} else {
 					queue.put(msg);
 				}
 			}
 		}
+		System.exit(0);
 	}
 	
 	private void initClient(String host) throws IOException {
 		System.out.println("Joining TrollFace-group~");
 		System.out.println(tf);
-		queue.joinGroup(port+1, new InetSocketAddress(host, port), MulticastQueue.DeliveryGuarantee.NONE);
+		queue.joinGroup(port+4, new InetSocketAddress(host, port), MulticastQueue.DeliveryGuarantee.NONE);
 	}
 	
 	private void initServer() throws UnknownHostException, IOException{

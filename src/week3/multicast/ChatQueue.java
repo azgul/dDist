@@ -324,6 +324,12 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			// pendingSends again.
 			pendingSends.notify();
 		}
+		
+		try{
+			while(!outgoing.isEmpty()) Thread.sleep(5);
+		}catch(InterruptedException e){
+			// Interrupted
+		}
 	}
 	
 	
