@@ -14,7 +14,6 @@ import week3.multicast.ChatQueue;
  */
 public class MultiChat {
 	private int port = 1337;
-	//private final MulticastQueueFifoOnly<String> queue = new MulticastQueueFifoOnly<String>();
 	private final ChatQueue queue = new ChatQueue();
 	private ChatListener listener;
 	
