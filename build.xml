@@ -62,6 +62,15 @@ dDist build management.
     </java>
   </target>
   
+  <target name="multichat" depends="buildAll">
+    <java fork="yes" classname="week3.MultiChat">
+		<arg line="-host"/>
+      <classpath>
+		<path refid="classPath"/>
+      </classpath>
+    </java>
+  </target>
+  
   <!-- Run Unit Tests -->
   <target name="testAll" depends="buildAll">
 	  <junit printsummary="yes">
