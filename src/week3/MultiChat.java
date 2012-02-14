@@ -5,7 +5,7 @@ import java.net.*;
 import java.util.*;
 import multicast.*;
 import week3.ChatListener;
-import week3.MultiChat.MulticastChatQueue;
+import week3.multicast.ChatQueue;
 
 
 /**
@@ -15,7 +15,7 @@ import week3.MultiChat.MulticastChatQueue;
 public class MultiChat {
 	private int port = 1337;
 	//private final MulticastQueueFifoOnly<String> queue = new MulticastQueueFifoOnly<String>();
-	private final MulticastChatQueue<String> queue = new MulticastChatQueue<String>();
+	private final ChatQueue queue = new ChatQueue();
 	private ChatListener listener;
 	
 	public MultiChat(){
@@ -64,7 +64,7 @@ public class MultiChat {
 				if (msg.toLowerCase().equals("exit")) {
 					listener.interrupt();
 					queue.leaveGroup();
-					System.exit(1);
+					System.exit(0);
 				} else {
 					queue.put(msg);
 				}
@@ -73,16 +73,19 @@ public class MultiChat {
 	}
 	
 	private void initClient(String host) throws IOException {
-		System.out.println("Joining group~");
+		System.out.println("Joining TrollFace-group~");
+		System.out.println(tf);
 		queue.joinGroup(port+1, new InetSocketAddress(host, port), MulticastQueue.DeliveryGuarantee.NONE);
 	}
 	
 	private void initServer() throws UnknownHostException, IOException{
-		System.out.println("Creating group~");
-		queue.createGroup(port, MulticastQueue.DeliveryGuarantee.FIFO);
-		queue.put(tf);
+		System.out.println("Creating TrollFace-group~");
+		System.out.println(tf);
 		
-		String tf = 
+		queue.createGroup(port, MulticastQueue.DeliveryGuarantee.FIFO);
+	}
+	
+	private String tf = 
 			"░░░░░▄▄▄▄▀▀▀▀▀▀▀▀▄▄▄▄▄▄░░░░░░░░\n" +
 			"░░░░░█░░░░▒▒▒▒▒▒▒▒▒▒▒▒░░▀▀▄░░░░\n" +
 			"░░░░█░░░▒▒▒▒▒▒░░░░░░░░▒▒▒░░█░░░\n" +
@@ -97,6 +100,5 @@ public class MultiChat {
 			"░░░░░▀▄░░░░░▀▀▄▄▄█▄█▄█▄█▄▀░░█░░\n" +
 			"░░░░░░░▀▄▄░▒▒▒▒░░░░░░░░░░▒░░░█░\n" +
 			"░░░░░░░░░░▀▀▄▄░▒▒▒▒▒▒▒▒▒▒░░░░█░\n" +
-			"░░░░░░░░░░░░░░▀▄▄▄▄▄░░░░░░░░█░░";	
-	}
+			"░░░░░░░░░░░░░░▀▄▄▄▄▄░░░░░░░░█░░";
 }

@@ -12,28 +12,15 @@ import multicast.MulticastMessage;
  *
  * @author Lars Rasmussen
  */
-public class BacklogResponseMessage extends MulticastMessage {
+public class BacklogMessage extends MulticastMessage {
 	private ArrayList<MulticastMessage> backlog;
 	
-	public BacklogResponseMessage(InetSocketAddress addr, ArrayList<MulticastMessage> backlog){
+	public BacklogMessage(InetSocketAddress addr, ArrayList<MulticastMessage> backlog){
 		super(addr);
 		this.backlog = backlog;
 	}
 	
 	public ArrayList<MulticastMessage> getBacklog(){
 		return backlog;
-	}
-	
-	public String toString(){
-		StringBuilder messages = new StringBuilder();
-		for(MulticastMessage msg : backlog){
-			messages.append(msg);
-			messages.append("\n");
-		}
-		
-		// Remove last linebreak
-		messages.deleteCharAt(-1);
-		
-		return messages.toString();
 	}
 }

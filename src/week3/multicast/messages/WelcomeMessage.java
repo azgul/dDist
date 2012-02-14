@@ -11,8 +11,8 @@ import multicast.MulticastMessage;
  *
  * @author Lars Rasmussen
  */
-public class BacklogRequestMessage extends MulticastMessage {
-	public BacklogRequestMessage(InetSocketAddress addr){
+public class WelcomeMessage extends MulticastMessage{
+	public WelcomeMessage(InetSocketAddress addr){
 		super(addr);
 	}
 }

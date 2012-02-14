@@ -93,7 +93,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		myAddress = new InetSocketAddress(localHostAddress, port);
 
 		// Buffer a message that we have joined the group.
-		addAndNotify(pendingGets, new MulticastMessageJoin(myAddress));
+		//addAndNotify(pendingGets, new MulticastMessageJoin(myAddress));
 
 		// Start the receiveing thread.
 		this.start();
@@ -125,7 +125,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		hasConnectionToUs.add(knownPeer);	
 
 		// Buffer a message that we have joined the group.
-		addAndNotify(pendingGets, new MulticastMessageJoin(myAddress));
+		//addAndNotify(pendingGets, new MulticastMessageJoin(myAddress));
 
 		// Start the receiving thread
 		this.start();
@@ -146,23 +146,26 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		*/
 		while ((msg = incoming.get()) != null) {
 			if (msg instanceof ChatMessage) {
-				//MulticastMessagePayload pmsg = (MulticastMessagePayload)msg;
-				//handle(pmsg);
+				ChatMessage cmsg = (ChatMessage)msg;
+				handle(cmsg);
 			} else if (msg instanceof JoinRequestMessage) {
-				//JoinRequestMessage jrmsg = (JoinRequestMessage)msg;
-				//handle(jrmsg);
+				JoinRequestMessage jrmsg = (JoinRequestMessage)msg;
+				handle(jrmsg);
 			} else if (msg instanceof JoinRelayMessage) {
-				//JoinRelayMessage jmsg = (JoinRelayMessage)msg;
-				//handle(jmsg);
-			//} else if (msg instanceof WelcomeMessage) {
-				//WellcomeMessage wmsg = (WellcomeMessage)msg;
-				//handle(wmsg);
+				JoinRelayMessage jmsg = (JoinRelayMessage)msg;
+				handle(jmsg);
 			} else if (msg instanceof LeaveGroupMessage) {
-				//MulticastMessageLeave lmsg = (MulticastMessageLeave)msg;
-				//handle(lmsg);
-			} else if (msg instanceof BacklogRequestMessage) {
-				//GoodbuyMessage gmsg = (GoodbuyMessage)msg;
-				//handle(gmsg);
+				LeaveGroupMessage lmsg = (LeaveGroupMessage)msg;
+				handle(lmsg);
+			} else if (msg instanceof WelcomeMessage) {
+				WelcomeMessage wmsg = (WelcomeMessage)msg;
+				handle(wmsg);
+			} else if (msg instanceof GoodbyeMessage) {
+				GoodbyeMessage gmsg = (GoodbyeMessage)msg;
+				handle(gmsg);
+			} else if (msg instanceof BacklogMessage){
+				BacklogMessage bmsg = (BacklogMessage) msg;
+				handle(bmsg);
 			}
 			
 			// Save the backlog
@@ -177,7 +180,113 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			pendingGets.notifyAll();
 		}
 	}
+	
+	private void handle(BacklogMessage msg){
+		// We have joined the group
+		backlog = msg.getBacklog();
+		printBacklog();
+	}
+	
+	private void handle(LeaveGroupMessage msg){
+		InetSocketAddress address = msg.getSender();
+		if (!address.equals(myAddress)){
+			addAndNotify(pendingGets, msg);
+			disconnectFrom(address);
+		}else{
+			// That was my own leave message. If I'm the only one left
+			// in the group, then this means that I can safely shut
+			// down.
+			if (hasConnectionToUs.isEmpty())
+				incoming.shutdown();
+			
+			System.out.println("[You have left the group]");
+		}
+	}
+	
+	/**
+     * A goodbuy message is produced as response to a leave message
+     * and is handled by closing the connection to the existing peer
+     * who sent the goodbuy message. After this, SendToAll will not
+     * send a copy to the peer who sent us this goodbuy message.
+     */
+    private void handle(GoodbyeMessage msg) {
+		// When the peer sent us the goodbuy message, it closed its
+		// connection to us, so let us remember that.
+		synchronized(hasConnectionToUs) {
+			hasConnectionToUs.remove(msg.getSender());
+			// If we are leaving and that was the last goodbuy
+			// message, then we can shut down the incoming queue and
+			// terminate the receving thread.
+			if (hasConnectionToUs.isEmpty() && isLeaving) {
+				// If the receiving thread is blocked on the incoming
+				// queue, it will be woken up and receive a null when
+				// the queue is empty, which will tell it that we have
+				// received all messages.
+				incoming.shutdown();
+			}
+		}
+    }
+	
+	private void handle(WelcomeMessage msg){
+		// When the sender sent us the wellcome message it connect to
+		// us, so let us remember that she has a connection to us.
+		synchronized(hasConnectionToUs) {
+			hasConnectionToUs.add(msg.getSender());
+		}
+		connectToPeerAt(msg.getSender());
+	}
+	
+	private void handle(JoinRelayMessage msg){
+		if(!msg.getSender().equals(myAddress))
+			addAndNotify(pendingGets, msg);
+		
+		// Connect to the new peer and bid him welcome. 
+		PointToPointQueueSenderEnd<MulticastMessage> out = connectToPeerAt(msg.getAddressOfJoiner());
+		out.put(new WelcomeMessage(myAddress));
+		// When this peer receives the wellcome message it will
+		// connect to us, so let us remember that she has a connection
+		// to us.
 
+		synchronized(hasConnectionToUs) {
+			hasConnectionToUs.add(msg.getAddressOfJoiner());
+		}
+	}
+	
+	private void handle(JoinRequestMessage msg){
+		// When the joining peer sent the join request it connected to
+		// us, so let us remember that she has a connection to us. 
+		synchronized(hasConnectionToUs) {
+			hasConnectionToUs.add(msg.getSender()); 
+		}
+		
+		// Buffer a join message so it can be gotten. 
+		addAndNotify(pendingGets, msg);
+		addAndNotify(pendingGets, new JoinRelayMessage(myAddress, msg.getSender()));
+
+		// Then we tell the rest of the group that we have a new member.
+		sendToAllExceptMe(new JoinRelayMessage(myAddress, msg.getSender()));
+		
+		// Then we connect to the new peer. 
+		PointToPointQueueSenderEnd<MulticastMessage> out = connectToPeerAt(msg.getSender());
+		out.put(new BacklogMessage(myAddress, backlog));
+	}
+	
+	private void handle(ChatMessage msg){
+		addAndNotify(pendingGets, msg);
+	}
+
+	private void printBacklog(){
+		for(MulticastMessage msg : backlog)
+			if(msg instanceof JoinRequestMessage){
+				// Do nothing
+			}else if(msg instanceof JoinRelayMessage){
+				if(!msg.getSender().equals(myAddress))
+					addAndNotify(pendingGets, msg);
+			}else{
+				addAndNotify(pendingGets, msg);
+			}
+	}
+	
 	@Override
 	public void put(Serializable object) {
 		String msg = (String)object;
@@ -356,7 +465,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
      * Used to add an element to a collection and wake up one thread
      * waiting for elements on the collection.
      */
-    private <T> void addAndNotify(Collection<T> coll, T msg) {
+    protected <T> void addAndNotify(Collection<T> coll, T msg) {
 		synchronized (coll) {
 			coll.add(msg);
 			// Notify that there is a new message. 
