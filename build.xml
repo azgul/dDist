@@ -17,11 +17,14 @@
     <echo>
 dDist build management.
   Targets:
-    buildSrc:       Builds production code.
-    clean:          Removes all bytecode.
+    buildSrc:             Builds production code.
+    clean:                Removes all bytecode.
 
-    runWebServer:   Run the webserver using port 1337 and folder wwwroot
-	testAll:        Run all jUnit tests
+    runWebServer:         Run the webserver using port 1337 and folder wwwroot
+    testAll:              Run all jUnit tests
+	
+    runMultiChatServer:   Starts the MultiChat server on the current host
+	runMultiChatClient:   Starts the MultiChat as a client. Specify 1 parameter as host when running!
     </echo>
   </target>
 
@@ -62,7 +65,15 @@ dDist build management.
     </java>
   </target>
   
-  <target name="multichat" depends="buildAll">
+  <target name="runMultiChatServer" depends="buildAll">
+    <java fork="yes" classname="week3.MultiChat">
+      <classpath>
+		<path refid="classPath"/>
+      </classpath>
+    </java>
+  </target>
+  
+  <target name="runMultiChatClient" depends="buildAll">
     <java fork="yes" classname="week3.MultiChat">
 		<arg line="${host}"/>
       <classpath>
