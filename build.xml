@@ -64,7 +64,7 @@ dDist build management.
   
   <target name="multichat" depends="buildAll">
     <java fork="yes" classname="week3.MultiChat">
-		<arg line="-host"/>
+		<arg line="${argument1}"/>
       <classpath>
 		<path refid="classPath"/>
       </classpath>
