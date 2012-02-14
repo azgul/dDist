@@ -74,19 +74,19 @@ public class MultiChat {
 	
 	private void initClient(String host) throws IOException {
 		System.out.println("Joining TrollFace-group~");
-		System.out.println(tf);
 		queue.joinGroup(port+4, new InetSocketAddress(host, port), MulticastQueue.DeliveryGuarantee.NONE);
 	}
 	
 	private void initServer() throws UnknownHostException, IOException{
 		System.out.println("Creating TrollFace-group~");
-		System.out.println(tf);
 		
 		queue.createGroup(port, MulticastQueue.DeliveryGuarantee.FIFO);
+		
+		queue.put(motd);
 	}
 	
-	private String tf = 
-			"░░░░░▄▄▄▄▀▀▀▀▀▀▀▀▄▄▄▄▄▄░░░░░░░░\n" +
+	private String motd = 
+			"\n░░░░░▄▄▄▄▀▀▀▀▀▀▀▀▄▄▄▄▄▄░░░░░░░░\n" +
 			"░░░░░█░░░░▒▒▒▒▒▒▒▒▒▒▒▒░░▀▀▄░░░░\n" +
 			"░░░░█░░░▒▒▒▒▒▒░░░░░░░░▒▒▒░░█░░░\n" +
 			"░░░█░░░░░░▄██▀▄▄░░░░░▄▄▄░░░░█░░\n" +
