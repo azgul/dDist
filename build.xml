@@ -74,8 +74,10 @@ dDist build management.
   </target>
   
   <target name="runMultiChatClient" depends="buildAll">
-    <java fork="yes" classname="week3.MultiChat">
-		<arg line="${host}"/>
+    <java fork="yes" classname="week4.MultiChat">
+		<arg value="${host}"/>
+		<arg value="${ownPort}"/>
+		<arg value="${serverPort}"/>
       <classpath>
 		<path refid="classPath"/>
       </classpath>

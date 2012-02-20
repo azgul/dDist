@@ -30,11 +30,24 @@ public class MultiChat {
 	}
 	
 	public MultiChat(String host){
+		initMultiChat(host,port,port);
+	}
+	
+	public MultiChat(String host, int serverPort){
+		initMultiChat(host,port,serverPort);
+	}
+	
+	public MultiChat(String host, int ownPort, int serverPort){
+		initMultiChat(host, ownPort, serverPort);
+	}
+	
+	public void initMultiChat(String host, int ownPort, int serverPort){
 		try{
-			initClient(host);
+			initClient(host,ownPort,serverPort);
 			start();
 		}catch(BindException e){
-			System.err.println("You cannot run multiple clients on the same computer, since the port ("+port+") is already in use!");
+			System.err.println("You cannot run multiple clients on the same computer, since the port ("+ownPort+") is already in use!");
+			e.printStackTrace();
 			System.exit(0);
 		}catch(IOException e){
 			System.err.println("IOException y0");
@@ -51,7 +64,16 @@ public class MultiChat {
 			
 	public static void main(String[] args){
 		MultiChat mc;
-		if (args.length >= 1)
+		if(args.length == 3){
+			int oPort = Integer.getInteger(args[1]);
+			int sPort = Integer.getInteger(args[2]);
+			mc = new MultiChat(args[0],oPort,sPort);
+		}
+		else if(args.length == 2){
+			int sPort = Integer.getInteger(args[1]);
+			mc = new MultiChat(args[0],sPort);
+		}
+		else if (args.length == 1)
 			mc = new MultiChat(args[0]);
 		else
 			mc = new MultiChat();
@@ -75,9 +97,24 @@ public class MultiChat {
 		System.exit(0);
 	}
 	
-	private void initClient(String host) throws IOException {
+	/**
+	 * Init client with host and port
+	 * @param String host of known peer
+	 * @param int port of known peer
+	 * @throws IOException 
+	 */
+	private void initClient(String host, int oPort, int sPort) throws IOException {
 		System.out.println("Joining TrollFace-group~");
-		queue.joinGroup(port, new InetSocketAddress(host, port), MulticastQueue.DeliveryGuarantee.NONE);
+		queue.joinGroup(oPort, new InetSocketAddress(host, sPort), MulticastQueue.DeliveryGuarantee.NONE);
+	}
+	
+	/**
+	 * Init client with default port
+	 * @param String host of known peer
+	 * @throws IOException 
+	 */
+	private void initClient(String host) throws IOException {
+		initClient(host,port,port);
 	}
 	
 	private void initServer() throws UnknownHostException, IOException{
