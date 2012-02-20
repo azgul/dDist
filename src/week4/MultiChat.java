@@ -5,7 +5,7 @@ import java.net.*;
 import java.util.*;
 import multicast.*;
 //import ChatListener;
-import week4.totallyordered.ChatQueue;
+import week4.multicast.ChatQueue;
 
 
 /**

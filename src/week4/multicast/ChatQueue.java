@@ -1,4 +1,4 @@
-package week4.totallyordered;
+package week4.multicast;
 
 
 import week3.multicast.*;
