@@ -155,7 +155,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		while ((msg = incoming.get()) != null) {
 			
 			// Update the lamport clock
-			clock = Math.max(msg.getClock(), clock);
+			clock = Math.max(msg.getClock(), clock)+1;
 			
 			if (msg instanceof ChatMessage) {
 				ChatMessage cmsg = (ChatMessage)msg;
