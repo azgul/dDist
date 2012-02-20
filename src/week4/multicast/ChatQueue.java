@@ -6,12 +6,10 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 import multicast.*;
 import week4.multicast.messages.*;
 import week4.multicast.messages.AbstractLamportMessage;
@@ -66,7 +64,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
     /**
      * Objects pending delivering locally.
      */
-    private ConcurrentLinkedQueue<AbstractLamportMessage> pendingGets;
+    private PriorityQueue<AbstractLamportMessage> pendingGets;
     
     /**
      * Objects pending sending.
@@ -75,14 +73,22 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	
 	private ArrayList<AbstractLamportMessage> backlog;
 	
+	private static int QUEUE_CAP = 10;
+	
+	/**
+	 * Acknowledgement map
+	 */
+	private ConcurrentHashMap<AbstractLamportMessage,HashSet<InetSocketAddress>> acknowledgements;
+	
 	public ChatQueue(){
 		clock = 0;
 		incoming = new PointToPointQueueReceiverEndNonRobust<AbstractLamportMessage>();
-		pendingGets = new ConcurrentLinkedQueue<AbstractLamportMessage>();
+		pendingGets = new PriorityQueue<AbstractLamportMessage>(QUEUE_CAP, new LamportMessageComparator());
 		pendingSends = new ConcurrentLinkedQueue<String>();
 		outgoing = new ConcurrentHashMap<InetSocketAddress,PointToPointQueueSenderEnd<AbstractLamportMessage>>();
 		hasConnectionToUs = new HashSet<InetSocketAddress>();
 		backlog = new ArrayList<AbstractLamportMessage>();
+		acknowledgements = new ConcurrentHashMap<AbstractLamportMessage,HashSet<InetSocketAddress>>();
 		
 		sendingThread = new SendingThread();
 		sendingThread.start();
@@ -318,6 +324,8 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 				return null;
 				// By contract we signal shutdown by returning null.
 			} else {
+				AbstractLamportMessage msg = pendingGets.peek();
+				waitForAcknowledgementsOrReceivedAll(msg);
 				return pendingGets.poll();
 			}
 		}
@@ -456,6 +464,21 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		PointToPointQueueSenderEnd<AbstractLamportMessage> randomPeer = (PointToPointQueueSenderEnd<AbstractLamportMessage>) values[generator.nextInt(values.length)];
 		
 		randomPeer.put(msg);
+	}
+	
+	
+	/**
+	 * Used by callers to wait for acknowledgements
+	 */
+	private void waitForAcknowledgementsOrReceivedAll(AbstractLamportMessage msg){
+		synchronized(acknowledgements){
+			
+			while(!noMoreGetsWillBeAdded && acknowledgements.contains(msg) && !acknowledgements.get(msg).containsAll(hasConnectionToUs)){
+				try {
+					acknowledgements.wait();
+				}catch(InterruptedException e) {}
+			}
+		}
 	}
 	
 	/**
