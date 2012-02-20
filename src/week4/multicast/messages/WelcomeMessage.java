@@ -11,8 +11,8 @@ import multicast.MulticastMessage;
  *
  * @author Lars Rasmussen
  */
-public class WelcomeMessage extends LamportMulticastMessage{
-	public WelcomeMessage(InetSocketAddress addr, int clock){
-		super(addr, clock);
+public class WelcomeMessage extends AbstractLamportMessage{
+	public WelcomeMessage(InetSocketAddress addr){
+		super(addr);
 	}
 }

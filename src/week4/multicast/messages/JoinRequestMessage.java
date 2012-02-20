@@ -11,9 +11,9 @@ import multicast.MulticastMessage;
  *
  * @author Lars Rasmussen
  */
-public class JoinRequestMessage extends LamportMulticastMessage {
-	public JoinRequestMessage(InetSocketAddress myAddress, int clock){
-		super(myAddress, clock);
+public class JoinRequestMessage extends AbstractLamportMessage {
+	public JoinRequestMessage(InetSocketAddress myAddress){
+		super(myAddress);
 	}
 	
 	@Override

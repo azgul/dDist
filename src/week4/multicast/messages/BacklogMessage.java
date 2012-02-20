@@ -12,15 +12,15 @@ import multicast.MulticastMessage;
  *
  * @author Lars Rasmussen
  */
-public class BacklogMessage extends LamportMulticastMessage {
-	private ArrayList<LamportMulticastMessage> backlog;
+public class BacklogMessage extends AbstractLamportMessage {
+	private ArrayList<AbstractLamportMessage> backlog;
 	
-	public BacklogMessage(InetSocketAddress addr, ArrayList<LamportMulticastMessage> backlog, int clock){
-		super(addr, clock);
+	public BacklogMessage(InetSocketAddress addr, ArrayList<AbstractLamportMessage> backlog){
+		super(addr);
 		this.backlog = backlog;
 	}
 	
-	public ArrayList<LamportMulticastMessage> getBacklog(){
+	public ArrayList<AbstractLamportMessage> getBacklog(){
 		return backlog;
 	}
 }

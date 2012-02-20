@@ -11,9 +11,9 @@ import multicast.MulticastMessage;
  *
  * @author Lars Rasmussen
  */
-public class LeaveGroupMessage extends LamportMulticastMessage{
-	public LeaveGroupMessage(InetSocketAddress addr, int clock){
-		super(addr, clock);
+public class LeaveGroupMessage extends AbstractLamportMessage{
+	public LeaveGroupMessage(InetSocketAddress addr){
+		super(addr);
 	}
 	
 	public String toString(){

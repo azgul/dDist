@@ -11,11 +11,11 @@ import multicast.MulticastMessage;
  *
  * @author Lars Rasmussen
  */
-public class JoinRelayMessage extends LamportMulticastMessage{
+public class JoinRelayMessage extends AbstractLamportMessage{
 	private InetSocketAddress addressOfJoiner;
 	
-	public JoinRelayMessage(InetSocketAddress sender, InetSocketAddress joiner, int clock) {
-	    super(sender, clock);
+	public JoinRelayMessage(InetSocketAddress sender, InetSocketAddress joiner) {
+	    super(sender);
 	    addressOfJoiner = joiner;
 	}
 	

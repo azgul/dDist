@@ -11,13 +11,18 @@ import multicast.MulticastMessage;
  *
  * @author larss
  */
-public class LamportMulticastMessage extends MulticastMessage{
+public abstract class AbstractLamportMessage extends MulticastMessage implements LamportMessage {
 	private int clock;
 	
-	public LamportMulticastMessage(InetSocketAddress addr, int clock){
+	public AbstractLamportMessage(InetSocketAddress addr){
 		super(addr);
-		this.clock = clock;
 	}
 	
-	public int getClock(){ return clock; }
+	public int getClock(){
+		return clock;
+	}
+	
+	public void setClock(int clock){
+		this.clock = clock;
+	}
 }

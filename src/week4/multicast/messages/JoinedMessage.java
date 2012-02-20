@@ -5,15 +5,14 @@
 package week4.multicast.messages;
 
 import java.net.InetSocketAddress;
-import multicast.MulticastMessageJoin;
 
 /**
  *
  * @author Lars Rasmussen
  */
-public class JoinedMessage extends LamportMulticastMessage{
-	public JoinedMessage(InetSocketAddress addr, int clock){
-		super(addr, clock);
+public class JoinedMessage extends AbstractLamportMessage{
+	public JoinedMessage(InetSocketAddress addr){
+		super(addr);
 	}
 	
 	public String toString(){
