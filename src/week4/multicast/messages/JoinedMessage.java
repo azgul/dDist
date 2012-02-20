@@ -11,9 +11,9 @@ import multicast.MulticastMessageJoin;
  *
  * @author Lars Rasmussen
  */
-public class JoinedMessage extends MulticastMessageJoin{
-	public JoinedMessage(InetSocketAddress addr){
-		super(addr);
+public class JoinedMessage extends LamportMulticastMessage{
+	public JoinedMessage(InetSocketAddress addr, int clock){
+		super(addr, clock);
 	}
 	
 	public String toString(){

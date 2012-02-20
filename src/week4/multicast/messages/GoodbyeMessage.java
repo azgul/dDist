@@ -11,8 +11,8 @@ import multicast.MulticastMessage;
  *
  * @author Lars Rasmussen
  */
-public class GoodbyeMessage extends MulticastMessage{
-	public GoodbyeMessage(InetSocketAddress addr){
-		super(addr);
+public class GoodbyeMessage extends LamportMulticastMessage{
+	public GoodbyeMessage(InetSocketAddress addr, int clock){
+		super(addr, clock);
 	}
 }

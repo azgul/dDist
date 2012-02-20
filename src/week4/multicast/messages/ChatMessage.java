@@ -11,11 +11,11 @@ import multicast.MulticastMessage;
  *
  * @author larss
  */
-public class ChatMessage extends MulticastMessage {
+public class ChatMessage extends LamportMulticastMessage {
 	String message;
 	
-	public ChatMessage(InetSocketAddress sender, String message){
-		super(sender);
+	public ChatMessage(InetSocketAddress sender, String message, int clock){
+		super(sender, clock);
 		this.message = message;
 	}
 	

@@ -1,7 +1,7 @@
 package week4.multicast;
 
 
-import week3.multicast.*;
+import week4.multicast.*;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
@@ -13,10 +13,16 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import multicast.*;
-import week3.multicast.messages.*;
+import week4.multicast.messages.*;
+import week4.multicast.messages.LamportMulticastMessage;
 
 
 public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
+	/**
+	 * Lamport Clock
+	 */
+	private final int clock;
+	
 	/**
      * The address on which we listen for incoming messages.
      */      
@@ -49,33 +55,34 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
      * The incoming message queue. All other peers send their messages
      * to this queue.
      */
-    private PointToPointQueueReceiverEnd<MulticastMessage> incoming;
+    private PointToPointQueueReceiverEnd<LamportMulticastMessage> incoming;
 
     /**
      * Keeping track of the outgoing message queues, stored under the
      * corresponding internet address.
      */
-    private ConcurrentHashMap<InetSocketAddress,PointToPointQueueSenderEnd<MulticastMessage>> outgoing;
+    private ConcurrentHashMap<InetSocketAddress,PointToPointQueueSenderEnd<LamportMulticastMessage>> outgoing;
 
     /**
      * Objects pending delivering locally.
      */
-    private ConcurrentLinkedQueue<MulticastMessage> pendingGets;
+    private ConcurrentLinkedQueue<LamportMulticastMessage> pendingGets;
     
     /**
      * Objects pending sending.
      */
     private ConcurrentLinkedQueue<String> pendingSends;
 	
-	private ArrayList<MulticastMessage> backlog;
+	private ArrayList<LamportMulticastMessage> backlog;
 	
 	public ChatQueue(){
-		incoming = new PointToPointQueueReceiverEndNonRobust<MulticastMessage>();
-		pendingGets = new ConcurrentLinkedQueue<MulticastMessage>();
+		clock = 0;
+		incoming = new PointToPointQueueReceiverEndNonRobust<LamportMulticastMessage>();
+		pendingGets = new ConcurrentLinkedQueue<LamportMulticastMessage>();
 		pendingSends = new ConcurrentLinkedQueue<String>();
-		outgoing = new ConcurrentHashMap<InetSocketAddress,PointToPointQueueSenderEnd<MulticastMessage>>();
+		outgoing = new ConcurrentHashMap<InetSocketAddress,PointToPointQueueSenderEnd<LamportMulticastMessage>>();
 		hasConnectionToUs = new HashSet<InetSocketAddress>();
-		backlog = new ArrayList<MulticastMessage>();
+		backlog = new ArrayList<LamportMulticastMessage>();
 		
 		sendingThread = new SendingThread();
 		sendingThread.start();
@@ -114,10 +121,10 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		myAddress = new InetSocketAddress(localHostAddress, port);
 
 		// Make an outgoing connection to the known peer.
-		PointToPointQueueSenderEnd<MulticastMessage> out = connectToPeerAt(knownPeer);	
+		PointToPointQueueSenderEnd<LamportMulticastMessage> out = connectToPeerAt(knownPeer);	
 
 		// Send the known peer our address. 
-		JoinRequestMessage joinRequestMessage = new JoinRequestMessage(myAddress);
+		JoinRequestMessage joinRequestMessage = new JoinRequestMessage(myAddress, clock);
 		out.put(joinRequestMessage);
 		
 		// When the known peer receives the join request it will
@@ -126,7 +133,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		hasConnectionToUs.add(knownPeer);	
 
 		// Buffer a message that we have joined the group.
-		//addAndNotify(pendingGets, new MulticastMessageJoin(myAddress));
+		//addAndNotify(pendingGets, new LamportMulticastMessageJoin(myAddress));
 
 		// Start the receiving thread
 		this.start();
@@ -134,7 +141,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	
 	@Override
 	public void run(){
-		MulticastMessage msg;
+		LamportMulticastMessage msg;
 		
 		/* By contract we know that msg == null only occurs if
 		* incoming is shut down, which we are the only ones that can
@@ -242,8 +249,8 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			addAndNotify(pendingGets, msg);
 		
 		// Connect to the new peer and bid him welcome. 
-		PointToPointQueueSenderEnd<MulticastMessage> out = connectToPeerAt(msg.getAddressOfJoiner());
-		out.put(new WelcomeMessage(myAddress));
+		PointToPointQueueSenderEnd<LamportMulticastMessage> out = connectToPeerAt(msg.getAddressOfJoiner());
+		out.put(new WelcomeMessage(myAddress, clock));
 		// When this peer receives the wellcome message it will
 		// connect to us, so let us remember that she has a connection
 		// to us.
@@ -262,14 +269,14 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		
 		// Buffer a join message so it can be gotten. 
 		addAndNotify(pendingGets, msg);
-		addAndNotify(pendingGets, new JoinRelayMessage(myAddress, msg.getSender()));
+		addAndNotify(pendingGets, new JoinRelayMessage(myAddress, msg.getSender(), clock));
 
 		// Then we tell the rest of the group that we have a new member.
-		sendToAllExceptMe(new JoinRelayMessage(myAddress, msg.getSender()));
+		sendToAllExceptMe(new JoinRelayMessage(myAddress, msg.getSender(), clock));
 		
 		// Then we connect to the new peer. 
-		PointToPointQueueSenderEnd<MulticastMessage> out = connectToPeerAt(msg.getSender());
-		out.put(new BacklogMessage(myAddress, backlog));
+		PointToPointQueueSenderEnd<LamportMulticastMessage> out = connectToPeerAt(msg.getSender());
+		out.put(new BacklogMessage(myAddress, backlog, clock));
 	}
 	
 	private void handle(ChatMessage msg){
@@ -277,7 +284,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	}
 
 	private void printBacklog(){
-		for(MulticastMessage msg : backlog)
+		for(LamportMulticastMessage msg : backlog)
 			//if(msg instanceof JoinRequestMessage){
 				// Do nothing
 			//}else if(msg instanceof JoinRelayMessage){
@@ -298,7 +305,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	}
 
 	@Override
-	public MulticastMessage get() {
+	public LamportMulticastMessage get() {
 		// Now an object is ready in pendingObjects, unless we are
 		// shutting down. 
 		synchronized (pendingGets) {
@@ -316,7 +323,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	public void leaveGroup() {
 		synchronized (pendingSends) {
 			assert (isLeaving != true): "Already left the group!"; 
-			sendToAll(new LeaveGroupMessage(myAddress));
+			sendToAll(new LeaveGroupMessage(myAddress, clock));
 			isLeaving = true;
 			
 			// We wake up the sending thread. If pendingSends happen
@@ -346,7 +353,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			waitForPendingSendsOrLeaving();
 			String msg;
 			while ((msg = pendingSends.poll()) != null) {
-				sendToAll(new ChatMessage(myAddress, msg));
+				sendToAll(new ChatMessage(myAddress, msg, clock));
 				waitForPendingSendsOrLeaving();
 			}
 			synchronized (outgoing) {
@@ -364,15 +371,15 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
      *        to. Returns null when attempting to make connection to
      *        self.
      */
-    private PointToPointQueueSenderEnd<MulticastMessage> connectToPeerAt(InetSocketAddress address) {
+    private PointToPointQueueSenderEnd<LamportMulticastMessage> connectToPeerAt(InetSocketAddress address) {
 		assert (!address.equals(myAddress)) : "Cannot connect to self.";
 		
 		// Do we have a connection already?
-		PointToPointQueueSenderEnd<MulticastMessage> out = outgoing.get(address);
+		PointToPointQueueSenderEnd<LamportMulticastMessage> out = outgoing.get(address);
 		
 		assert (out == null) : "Cannot connect twice to same peer!";
 		
-		out = new PointToPointQueueSenderEndNonRobust<MulticastMessage>();
+		out = new PointToPointQueueSenderEndNonRobust<LamportMulticastMessage>();
 		out.setReceiver(address);
 		
 		outgoing.put(address, out);
@@ -382,7 +389,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	
 	private void disconnectFrom(InetSocketAddress address) {
 		synchronized (outgoing) {
-			PointToPointQueueSenderEnd<MulticastMessage> out = outgoing.get(address);
+			PointToPointQueueSenderEnd<LamportMulticastMessage> out = outgoing.get(address);
 			if (out != null) {
 				outgoing.remove(address);
 				//out.put(new GoodbuyMessage(myAddress));
@@ -420,7 +427,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
      * sent us a wellcome message and who did not later send us a
      * goodbuy message, unless we are leaving the peer group.
      */
-    private void sendToAll(MulticastMessage msg) {
+    private void sendToAll(LamportMulticastMessage msg) {
 		if (isLeaving!=true) {
 			/* Send to self. */
 			incoming.put(msg);
@@ -428,18 +435,18 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			sendToAllExceptMe(msg);
 		}
     }
-    private void sendToAllExceptMe(MulticastMessage msg) {
+    private void sendToAllExceptMe(LamportMulticastMessage msg) {
 		if (isLeaving!=true) {
-			for (PointToPointQueueSenderEnd<MulticastMessage> out : outgoing.values()) {
+			for (PointToPointQueueSenderEnd<LamportMulticastMessage> out : outgoing.values()) {
 			out.put(msg);
 			}
 		}
     }
 	
-	private void sendToRandom(MulticastMessage msg){
+	private void sendToRandom(LamportMulticastMessage msg){
 		Random generator = new Random();
 		Object[] values = outgoing.values().toArray();
-		PointToPointQueueSenderEnd<MulticastMessage> randomPeer = (PointToPointQueueSenderEnd<MulticastMessage>) values[generator.nextInt(values.length)];
+		PointToPointQueueSenderEnd<LamportMulticastMessage> randomPeer = (PointToPointQueueSenderEnd<LamportMulticastMessage>) values[generator.nextInt(values.length)];
 		
 		randomPeer.put(msg);
 	}
