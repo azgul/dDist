@@ -184,7 +184,11 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			} else if (msg instanceof BacklogMessage){
 				BacklogMessage bmsg = (BacklogMessage) msg;
 				handle(bmsg);
+			} else if(msg instanceof AcknowledgeMessage){
+				AcknowledgeMessage amsg = (AcknowledgeMessage) msg;
+				handle(amsg);
 			}
+			
 			
 			// Save the backlog
 			backlog.add(msg);
@@ -291,6 +295,10 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	
 	private void handle(ChatMessage msg){
 		addAndNotify(pendingGets, msg);
+	}
+	
+	private  void handle(AcknowledgeMessage msg){
+		addAndNotify(acknowledgements,msg,msg.getSender());
 	}
 
 	private void printBacklog(){
@@ -516,4 +524,23 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			coll.notify();
 		}
     }
+	
+	/**
+	 * Used to add acknowledgement messages to map.
+	 */
+	protected void addAndNotify(ConcurrentHashMap<AbstractLamportMessage,HashSet<InetSocketAddress>> map, AbstractLamportMessage key, InetSocketAddress value){
+		synchronized(map){
+			HashSet<InetSocketAddress> ackList;
+			if(map.contains(key))
+				 ackList = map.get(key);
+			else
+				ackList = new HashSet<InetSocketAddress>();
+			
+			ackList.add(value);
+			
+			map.put(key,ackList);
+			
+			map.notify();
+		}
+	}
 }
