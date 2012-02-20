@@ -1,7 +1,5 @@
 package week4.multicast;
 
-
-import week4.multicast.*;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
@@ -14,8 +12,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import multicast.*;
 import week4.multicast.messages.*;
-import week4.multicast.messages.AbstractLamportMessage;
-
 
 public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	/**
