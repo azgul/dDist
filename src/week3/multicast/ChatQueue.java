@@ -277,14 +277,14 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 
 	private void printBacklog(){
 		for(MulticastMessage msg : backlog)
-			if(msg instanceof JoinRequestMessage){
+			//if(msg instanceof JoinRequestMessage){
 				// Do nothing
-			}else if(msg instanceof JoinRelayMessage){
-				if(!msg.getSender().equals(myAddress))
-					addAndNotify(pendingGets, msg);
-			}else{
+			//}else if(msg instanceof JoinRelayMessage){
+			//	if(!msg.getSender().equals(myAddress))
+			//		addAndNotify(pendingGets, msg);
+			//}else{
 				addAndNotify(pendingGets, msg);
-			}
+			//}
 	}
 	
 	@Override
