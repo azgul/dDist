@@ -21,7 +21,7 @@ public class JoinRelayMessage extends MulticastMessage{
 	
 	@Override
 	public String toString(){
-		return String.format("[%s has joined the chat!]", getSender());
+		return String.format("[%s has joined the chat!]", getAddressOfJoiner());
 	}
 	
 	public InetSocketAddress getAddressOfJoiner(){
