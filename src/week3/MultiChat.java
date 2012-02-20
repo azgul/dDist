@@ -33,6 +33,9 @@ public class MultiChat {
 		try{
 			initClient(host);
 			start();
+		}catch(BindException e){
+			System.err.println("You cannot run multiple clients on the same computer, since the port ("+port+") is already in use!");
+			System.exit(0);
 		}catch(IOException e){
 			System.err.println("IOException y0");
 			e.printStackTrace();
@@ -74,7 +77,7 @@ public class MultiChat {
 	
 	private void initClient(String host) throws IOException {
 		System.out.println("Joining TrollFace-group~");
-		queue.joinGroup(port+4, new InetSocketAddress(host, port), MulticastQueue.DeliveryGuarantee.NONE);
+		queue.joinGroup(port, new InetSocketAddress(host, port), MulticastQueue.DeliveryGuarantee.NONE);
 	}
 	
 	private void initServer() throws UnknownHostException, IOException{
