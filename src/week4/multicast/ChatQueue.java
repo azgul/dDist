@@ -163,6 +163,14 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			// Update the lamport clock
 			clock = Math.max(msg.getClock(), clock)+1;
 			
+			// Add current peers to acknowledge map if this is not an AcknowledgeMessage
+			synchronized(acknowledgements){
+				if(! (msg instanceof AcknowledgeMessage) ) {
+					HashSet<InetSocketAddress> currentPeers = hasConnectionToUs;
+					acknowledgements.put(msg, currentPeers);
+				}
+			}
+			
 			if (msg instanceof ChatMessage) {
 				ChatMessage cmsg = (ChatMessage)msg;
 				handle(cmsg);
@@ -480,10 +488,16 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	 */
 	private void waitForAcknowledgementsOrReceivedAll(AbstractLamportMessage msg){
 		synchronized(acknowledgements){
-			
-			while(!noMoreGetsWillBeAdded && acknowledgements.contains(msg) && !acknowledgements.get(msg).containsAll(hasConnectionToUs)){
+			// Clone our HashSet of missing acknowledgements to get intersection with connected peers
+			HashSet<InetSocketAddress> ackClone = (HashSet<InetSocketAddress>)acknowledgements.get(msg).clone();
+			ackClone.retainAll(hasConnectionToUs);
+			while(!noMoreGetsWillBeAdded && acknowledgements.contains(msg) &&
+						!ackClone.isEmpty()){
 				try {
 					acknowledgements.wait();
+					// Update our clone
+					ackClone = (HashSet<InetSocketAddress>)acknowledgements.get(msg).clone();
+					ackClone.retainAll(hasConnectionToUs);
 				}catch(InterruptedException e) {}
 			}
 		}
@@ -530,13 +544,9 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	 */
 	protected void addAndNotify(ConcurrentHashMap<AbstractLamportMessage,HashSet<InetSocketAddress>> map, AbstractLamportMessage key, InetSocketAddress value){
 		synchronized(map){
-			HashSet<InetSocketAddress> ackList;
-			if(map.contains(key))
-				 ackList = map.get(key);
-			else
-				ackList = new HashSet<InetSocketAddress>();
+			HashSet<InetSocketAddress> ackList = map.get(key);
 			
-			ackList.add(value);
+			ackList.remove(value);
 			
 			map.put(key,ackList);
 			
