@@ -26,10 +26,10 @@ public class TotallyOrderedMultiCastStressTest {
 		
 		try {
 			queue[0].createGroup(port, MulticastQueue.DeliveryGuarantee.FIFO);
-			queue[1].joinGroup(port+1, new InetSocketAddress("localhost", port), MulticastQueue.DeliveryGuarantee.FIFO);
-			queue[2].joinGroup(port+2, new InetSocketAddress("localhost", port+1), MulticastQueue.DeliveryGuarantee.FIFO);
-			queue[3].joinGroup(port+3, new InetSocketAddress("localhost", port+2), MulticastQueue.DeliveryGuarantee.FIFO);
-			queue[4].joinGroup(port+4, new InetSocketAddress("localhost", port+3), MulticastQueue.DeliveryGuarantee.FIFO);
+			for (int i=1; i<peers; i++) {
+				queue[i].joinGroup(port+1, new InetSocketAddress("localhost", port), MulticastQueue.DeliveryGuarantee.FIFO);
+				port++;
+			}
 			
 		} catch (IOException e) {}
 	}
