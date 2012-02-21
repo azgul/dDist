@@ -502,15 +502,13 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 				ackClone = (HashSet<InetSocketAddress>)acknowledgements.get(msg).clone();
 				ackClone.retainAll(hasConnectionToUs);
 			}
-			while(!noMoreGetsWillBeAdded && !(acknowledgements.contains(msg) &&
+			while(!noMoreGetsWillBeAdded && !(acknowledgements.containsKey(msg) &&
 						ackClone.isEmpty())){
 				try {
-					System.out.println("Testing...");
 					acknowledgements.wait();
 					// Update our clone
 					ackClone = (HashSet<InetSocketAddress>)acknowledgements.get(msg).clone();
 					ackClone.retainAll(hasConnectionToUs);
-					System.err.println(ackClone.size());
 				}catch(InterruptedException e) {}
 			}
 		}
@@ -557,9 +555,13 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	 */
 	protected void addAndNotify(ConcurrentHashMap<AbstractLamportMessage,HashSet<InetSocketAddress>> map, AbstractLamportMessage key, InetSocketAddress value){
 		synchronized(map){
+			if(!map.containsKey(key))
+				return;
+			
 			HashSet<InetSocketAddress> ackList = map.get(key);
 			
-			ackList.remove(value);
+			if(ackList.contains(value))
+				ackList.remove(value);
 			
 			map.put(key,ackList);
 			
