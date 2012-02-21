@@ -78,7 +78,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	/**
 	 * Acknowledgement map
 	 */
-	private ConcurrentHashMap<AbstractLamportMessage,HashSet<InetSocketAddress>> acknowledgements;
+	private ConcurrentHashMap<Integer,HashSet<InetSocketAddress>> acknowledgements;
 	
 	public ChatQueue(){
 		clock = 0;
@@ -88,7 +88,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		outgoing = new ConcurrentHashMap<InetSocketAddress,PointToPointQueueSenderEnd<AbstractLamportMessage>>();
 		hasConnectionToUs = new HashSet<InetSocketAddress>();
 		backlog = new ArrayList<AbstractLamportMessage>();
-		acknowledgements = new ConcurrentHashMap<AbstractLamportMessage,HashSet<InetSocketAddress>>();
+		acknowledgements = new ConcurrentHashMap<Integer,HashSet<InetSocketAddress>>();
 		
 		sendingThread = new SendingThread();
 		sendingThread.start();
@@ -159,22 +159,19 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		* queue.
 		*/
 		while ((msg = incoming.get()) != null) {
-			
 			// Update the lamport clock
 			clock = Math.max(msg.getClock(), clock)+1;
-			
 			
 			synchronized(acknowledgements){
 				if(! (msg instanceof AcknowledgeMessage) ) {
 					// Add current peers to acknowledge map if this is not an AcknowledgeMessage
-					HashSet<InetSocketAddress> ackList = hasConnectionToUs;
-					acknowledgements.put(msg,ackList);
+					HashSet<InetSocketAddress> ackList = (HashSet<InetSocketAddress>) hasConnectionToUs;
+					acknowledgements.put(msg.hashCode(),ackList);
 					// Send acknowledgement
 					AbstractLamportMessage ack = new AcknowledgeMessage(msg.getSender(), msg);
 					ack.setClock(clock);
-					clock++;
 					sendToAllExceptMe(ack);
-					System.out.println("sending ack: " + msg.getSender() + " ("+clock+")");
+					System.out.println("sending ack: " + msg.getSender() + " ("+clock+") "+msg.hashCode());
 				}
 			}
 			
@@ -313,7 +310,8 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	}
 	
 	private  void handle(AcknowledgeMessage msg){
-		addAndNotify(acknowledgements,msg,msg.getSender());
+		System.out.println("Ack received.");
+		addAndNotify(acknowledgements,msg);
 	}
 
 	private void printBacklog(){
@@ -350,7 +348,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 				AbstractLamportMessage msg = pendingGets.peek();
 				waitForAcknowledgementsOrReceivedAll(msg);
 				// Acknowledgement for this message is now done, so remove the entry in the map
-				acknowledgements.remove(msg);
+				acknowledgements.remove(msg.hashCode());
 				return pendingGets.poll();
 			}
 		}
@@ -484,14 +482,6 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		}
     }
 	
-	private void sendToRandom(AbstractLamportMessage msg){
-		Random generator = new Random();
-		Object[] values = outgoing.values().toArray();
-		PointToPointQueueSenderEnd<AbstractLamportMessage> randomPeer = (PointToPointQueueSenderEnd<AbstractLamportMessage>) values[generator.nextInt(values.length)];
-		
-		randomPeer.put(msg);
-	}
-	
 	
 	/**
 	 * Used by callers to wait for acknowledgements
@@ -500,16 +490,16 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		synchronized(acknowledgements){
 			// Clone our HashSet of missing acknowledgements to get intersection with connected peers
 			HashSet<InetSocketAddress> ackClone = new HashSet<InetSocketAddress>();
-			if(acknowledgements.contains(msg)){
-				ackClone = (HashSet<InetSocketAddress>)acknowledgements.get(msg).clone();
+			if(acknowledgements.contains(msg.hashCode())){
+				ackClone = (HashSet<InetSocketAddress>)acknowledgements.get(msg.hashCode()).clone();
 				ackClone.retainAll(hasConnectionToUs);
 			}
-			while(!noMoreGetsWillBeAdded && !(acknowledgements.containsKey(msg) &&
+			while(!noMoreGetsWillBeAdded && !(acknowledgements.containsKey(msg.hashCode()) &&
 						ackClone.isEmpty())){
 				try {
 					acknowledgements.wait();
 					// Update our clone
-					ackClone = (HashSet<InetSocketAddress>)acknowledgements.get(msg).clone();
+					ackClone = (HashSet<InetSocketAddress>)acknowledgements.get(msg.hashCode()).clone();
 					ackClone.retainAll(hasConnectionToUs);
 				}catch(InterruptedException e) {}
 			}
@@ -555,13 +545,14 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	/**
 	 * Used to add acknowledgement messages to map.
 	 */
-	protected void addAndNotify(ConcurrentHashMap<AbstractLamportMessage,HashSet<InetSocketAddress>> map, AcknowledgeMessage msg, InetSocketAddress value){
+	protected void addAndNotify(ConcurrentHashMap<Integer,HashSet<InetSocketAddress>> map, AcknowledgeMessage msg){
 		System.out.println(String.format("Adding and notifying acknowledgement: %s (%s)", msg, msg.getClock()));
-		AbstractLamportMessage key = msg.getMessage();
+		int key = msg.getMessage().hashCode();
+		InetSocketAddress value = msg.getSender();
 		
 		synchronized(map){
 			if(!map.containsKey(key)){
-				System.out.println("Key doesnt exist...");
+				System.out.println("Key doesnt exist... "+key);
 				return;
 			}
 			
