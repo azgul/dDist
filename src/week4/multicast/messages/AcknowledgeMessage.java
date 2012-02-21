@@ -19,7 +19,7 @@ public class AcknowledgeMessage extends AbstractLamportMessage {
 	}
 	
 	public String toString(){
-		return String.format("[Acknowledge from %s]", getSender());
+		return String.format("[Acknowledge of %s (%s) from %s]", msg.hashCode(), msg, getSender());
 	}
 	
 	public AbstractLamportMessage getMessage(){

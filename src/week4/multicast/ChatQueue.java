@@ -162,15 +162,17 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			// Update the lamport clock
 			clock = Math.max(msg.getClock(), clock)+1;
 			
+			System.out.println("Got message (f: "+msg.getSender()+" - t:"+myAddress+"): "+msg+" ("+msg.hashCode()+")");
+			
 			synchronized(acknowledgements){
-				if(! (msg instanceof AcknowledgeMessage) ) {
+				if( (msg instanceof ChatMessage) && !(msg instanceof AcknowledgeMessage) ) {
 					// Add current peers to acknowledge map if this is not an AcknowledgeMessage
 					HashSet<InetSocketAddress> ackList = (HashSet<InetSocketAddress>) hasConnectionToUs;
 					acknowledgements.put(msg.hashCode(),ackList);
 					// Send acknowledgement
 					AbstractLamportMessage ack = new AcknowledgeMessage(myAddress, msg);
 					sendToAllExceptMe(ack);
-					System.out.println("sending ack: " + msg.getSender() + " ("+clock+") "+msg.hashCode());
+					System.out.println("sending ack: my:"+myAddress+" - sender:" + msg.getSender() + " ("+clock+") "+msg.hashCode());
 				}
 			}
 			
@@ -346,6 +348,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 				// By contract we signal shutdown by returning null.
 			} else {
 				AbstractLamportMessage msg = pendingGets.peek();
+				System.out.println("Waiting for ack...");
 				waitForAcknowledgementsOrReceivedAll(msg);
 				// Acknowledgement for this message is now done, so remove the entry in the map
 				acknowledgements.remove(msg.hashCode());
@@ -484,9 +487,9 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			msg.setClock(clock);
 			
 			// Send messages
-			for (PointToPointQueueSenderEnd<AbstractLamportMessage> out : outgoing.values())
+			for (PointToPointQueueSenderEnd<AbstractLamportMessage> out : outgoing.values()){
 				out.put(msg);
-			
+			}
 		}
     }
 	
@@ -498,6 +501,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		synchronized(acknowledgements){
 			// Clone our HashSet of missing acknowledgements to get intersection with connected peers
 			HashSet<InetSocketAddress> ackClone = new HashSet<InetSocketAddress>();
+			System.out.println("Ack wait: "+msg+" - "+msg.hashCode());
 			if(acknowledgements.contains(msg.hashCode())){
 				ackClone = (HashSet<InetSocketAddress>)acknowledgements.get(msg.hashCode()).clone();
 				ackClone.retainAll(hasConnectionToUs);
