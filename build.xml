@@ -89,7 +89,7 @@ dDist build management.
   <target name="testAll" depends="buildAll">
 	  <junit printsummary="yes">
 		  <test name="variations.TestShellFileProcessingStrategy"/>
-		  <test name="doesItWork"/>
+		  <test name="TotallyOrderedMultiCastStressTest"/>
 		  <classpath refid="classPath"/>
 	  </junit>
   </target>
