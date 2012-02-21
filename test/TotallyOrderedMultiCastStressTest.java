@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import multicast.MulticastMessage;
 import multicast.MulticastQueue;
 import org.junit.*;
 import static org.junit.Assert.*;
@@ -43,10 +44,20 @@ public class TotallyOrderedMultiCastStressTest {
 			q4.put("test4");
 		}
 		
+		MulticastMessage m1;
+		MulticastMessage m2;
+		MulticastMessage m3;
+		MulticastMessage m4;
+		
 		for (int i=0; i<(x*4);i++) {
-			assertEquals(q1.get(), q2.get());
-			assertEquals(q2.get(), q3.get());
-			assertEquals(q3.get(), q4.get());
+			m1 = q1.get();
+			m2 = q2.get();
+			m3 = q3.get();
+			m4 = q4.get();
+			
+			assertEquals(m1.toString(), m2.toString());
+			assertEquals(m2.toString(), m3.toString());
+			assertEquals(m3.toString(), m4.toString());
 		}
 	}
 }
