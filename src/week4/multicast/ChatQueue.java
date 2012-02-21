@@ -170,11 +170,11 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 					HashSet<InetSocketAddress> ackList = hasConnectionToUs;
 					acknowledgements.put(msg,ackList);
 					// Send acknowledgement
-					AbstractLamportMessage ack = new AcknowledgeMessage(msg.getSender());
+					AbstractLamportMessage ack = new AcknowledgeMessage(msg.getSender(), msg);
 					ack.setClock(clock);
 					clock++;
 					sendToAllExceptMe(ack);
-					System.out.println("ack: " + msg.getSender() + " ("+clock+")");
+					System.out.println("sending ack: " + msg.getSender() + " ("+clock+")");
 				}
 			}
 			
@@ -555,10 +555,15 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	/**
 	 * Used to add acknowledgement messages to map.
 	 */
-	protected void addAndNotify(ConcurrentHashMap<AbstractLamportMessage,HashSet<InetSocketAddress>> map, AbstractLamportMessage key, InetSocketAddress value){
+	protected void addAndNotify(ConcurrentHashMap<AbstractLamportMessage,HashSet<InetSocketAddress>> map, AcknowledgeMessage msg, InetSocketAddress value){
+		System.out.println(String.format("Adding and notifying acknowledgement: %s (%s)", msg, msg.getClock()));
+		AbstractLamportMessage key = msg.getMessage();
+		
 		synchronized(map){
-			if(!map.containsKey(key))
+			if(!map.containsKey(key)){
+				System.out.println("Key doesnt exist...");
 				return;
+			}
 			
 			HashSet<InetSocketAddress> ackList = map.get(key);
 			
