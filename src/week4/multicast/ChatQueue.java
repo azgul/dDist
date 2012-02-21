@@ -168,8 +168,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 					HashSet<InetSocketAddress> ackList = (HashSet<InetSocketAddress>) hasConnectionToUs;
 					acknowledgements.put(msg.hashCode(),ackList);
 					// Send acknowledgement
-					AbstractLamportMessage ack = new AcknowledgeMessage(msg.getSender(), msg);
-					ack.setClock(clock);
+					AbstractLamportMessage ack = new AcknowledgeMessage(myAddress, msg);
 					sendToAllExceptMe(ack);
 					System.out.println("sending ack: " + msg.getSender() + " ("+clock+") "+msg.hashCode());
 				}
@@ -178,6 +177,10 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			if (msg instanceof ChatMessage) {
 				ChatMessage cmsg = (ChatMessage)msg;
 				handle(cmsg);
+			} else if(msg instanceof AcknowledgeMessage){
+				System.out.println("Ready to handle ack msg");
+				AcknowledgeMessage amsg = (AcknowledgeMessage) msg;
+				handle(amsg);
 			} else if (msg instanceof JoinRequestMessage) {
 				JoinRequestMessage jrmsg = (JoinRequestMessage)msg;
 				handle(jrmsg);
@@ -196,9 +199,6 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			} else if (msg instanceof BacklogMessage){
 				BacklogMessage bmsg = (BacklogMessage) msg;
 				handle(bmsg);
-			} else if(msg instanceof AcknowledgeMessage){
-				AcknowledgeMessage amsg = (AcknowledgeMessage) msg;
-				handle(amsg);
 			}
 			
 			
