@@ -37,8 +37,8 @@ public class TotallyOrderedMultiCastStressTest {
 	@Test
 	public void doesItWork() {
 		for (int i=0; i<passes;i++) {
-			for (ChatQueue q : queue)
-				q.put(Integer.toString(i));
+			for (int j=0; j<peers; j++)
+				queue[j].put(Integer.toString(i));
 		}
 		
 		MulticastMessage[] message = new MulticastMessage[peers];
@@ -49,7 +49,7 @@ public class TotallyOrderedMultiCastStressTest {
 			}
 							
 			for (int k=0; k<peers; k++) {
-				if (k+1 <= message.length)
+				if (k+1 < message.length)
 					assertEquals(message[k].toString(), message[k+1].toString());
 			}
 		}
