@@ -52,6 +52,8 @@ public class TotallyOrderedMultiCastStressTest {
 				if (k+1 < message.length)
 					assertEquals(message[k].toString(), message[k+1].toString());
 			}
+			
+			message = new MulticastMessage[peers];
 		}
 	}
 }
