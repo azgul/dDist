@@ -342,6 +342,8 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			} else {
 				AbstractLamportMessage msg = pendingGets.peek();
 				waitForAcknowledgementsOrReceivedAll(msg);
+				// Acknowledgement for this message is now done, so remove the entry in the map
+				acknowledgements.remove(msg);
 				return pendingGets.poll();
 			}
 		}
