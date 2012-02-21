@@ -13,8 +13,8 @@ import week4.multicast.*;
  */
 public class TotallyOrderedMultiCastStressTest {
 	private int port = 1337;
-	private int peers = 5;
-	private int passes = 5;
+	private int peers = 2;
+	private int passes = 1;
 	private ChatQueue[] queue;
 	
 	@Before

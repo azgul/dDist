@@ -174,6 +174,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 					ack.setClock(clock);
 					clock++;
 					sendToAllExceptMe(ack);
+					System.out.println("ack: " + msg.getSender() + " ("+clock+")");
 				}
 			}
 			
@@ -393,6 +394,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 				AbstractLamportMessage lmsg = new ChatMessage(myAddress, msg);
 				lmsg.setClock(clock);
 				sendToAll(lmsg);
+				System.out.println(lmsg.getSender() + " sent: " + lmsg.toString() + " ("+lmsg.getClock()+")");
 				waitForPendingSendsOrLeaving();
 			}
 			synchronized (outgoing) {
