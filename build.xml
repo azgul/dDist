@@ -21,6 +21,7 @@ dDist build management.
     clean:                Removes all bytecode.
 
     runWebServer:         Run the webserver using port 1337 and folder wwwroot
+    testTOMC:             Run the jUnit test which stresstests TotallyOrderedMultiCast
     testAll:              Run all jUnit tests
 	
     runMultiChatServer:   Starts the MultiChat server on the current host
@@ -88,6 +89,14 @@ dDist build management.
   <target name="testAll" depends="buildAll">
 	  <junit printsummary="yes">
 		  <test name="variations.TestShellFileProcessingStrategy"/>
+		  <test name="doesItWork"/>
+		  <classpath refid="classPath"/>
+	  </junit>
+  </target>
+  
+  <target name="testTOMC" depends="buildAll">
+	  <junit printsummary="yes">
+		  <test name="TotallyOrderedMultiCastStressTest"/>
 		  <classpath refid="classPath"/>
 	  </junit>
   </target>
