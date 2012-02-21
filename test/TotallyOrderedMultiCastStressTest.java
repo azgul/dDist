@@ -49,7 +49,7 @@ public class TotallyOrderedMultiCastStressTest {
 			}
 							
 			for (int k=0; k<peers; k++) {
-				if (k+1 < message.length)
+				if (k+1 <= message.length)
 					assertEquals(message[k].toString(), message[k+1].toString());
 			}
 		}
