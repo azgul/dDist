@@ -163,11 +163,17 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			// Update the lamport clock
 			clock = Math.max(msg.getClock(), clock)+1;
 			
-			// Add current peers to acknowledge map if this is not an AcknowledgeMessage
+			
 			synchronized(acknowledgements){
 				if(! (msg instanceof AcknowledgeMessage) ) {
-					HashSet<InetSocketAddress> currentPeers = hasConnectionToUs;
-					acknowledgements.put(msg, currentPeers);
+					// Add current peers to acknowledge map if this is not an AcknowledgeMessage
+					HashSet<InetSocketAddress> ackList = hasConnectionToUs;
+					acknowledgements.put(msg,ackList);
+					// Send acknowledgement
+					AbstractLamportMessage ack = new AcknowledgeMessage(msg.getSender());
+					ack.setClock(clock);
+					clock++;
+					sendToAllExceptMe(ack);
 				}
 			}
 			
@@ -491,10 +497,13 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	private void waitForAcknowledgementsOrReceivedAll(AbstractLamportMessage msg){
 		synchronized(acknowledgements){
 			// Clone our HashSet of missing acknowledgements to get intersection with connected peers
-			HashSet<InetSocketAddress> ackClone = (HashSet<InetSocketAddress>)acknowledgements.get(msg).clone();
-			ackClone.retainAll(hasConnectionToUs);
-			while(!noMoreGetsWillBeAdded && acknowledgements.contains(msg) &&
-						!ackClone.isEmpty()){
+			HashSet<InetSocketAddress> ackClone = new HashSet<InetSocketAddress>();
+			if(acknowledgements.contains(msg)){
+				ackClone = (HashSet<InetSocketAddress>)acknowledgements.get(msg).clone();
+				ackClone.retainAll(hasConnectionToUs);
+			}
+			while(!noMoreGetsWillBeAdded && !(acknowledgements.containsKey(msg) &&
+						ackClone.isEmpty())){
 				try {
 					acknowledgements.wait();
 					// Update our clone
@@ -546,9 +555,13 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	 */
 	protected void addAndNotify(ConcurrentHashMap<AbstractLamportMessage,HashSet<InetSocketAddress>> map, AbstractLamportMessage key, InetSocketAddress value){
 		synchronized(map){
+			if(!map.containsKey(key))
+				return;
+			
 			HashSet<InetSocketAddress> ackList = map.get(key);
 			
-			ackList.remove(value);
+			if(ackList.contains(value))
+				ackList.remove(value);
 			
 			map.put(key,ackList);
 			
