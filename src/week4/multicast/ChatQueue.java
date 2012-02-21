@@ -388,7 +388,6 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			waitForPendingSendsOrLeaving();
 			String msg;
 			while ((msg = pendingSends.poll()) != null) {
-				clock++;
 				AbstractLamportMessage lmsg = new ChatMessage(myAddress, msg);
 				lmsg.setClock(clock);
 				sendToAll(lmsg);
@@ -468,6 +467,8 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
      */
     private void sendToAll(AbstractLamportMessage msg) {
 		if (isLeaving!=true) {
+			// Set the message clock to the current clock + 1 since the clock will be incremented in sendToAllExceptMe.
+			msg.setClock(clock+1);
 			/* Send to self. */
 			incoming.put(msg);
 			/* Then send to the others. */
@@ -476,9 +477,16 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
     }
     private void sendToAllExceptMe(AbstractLamportMessage msg) {
 		if (isLeaving!=true) {
-			for (PointToPointQueueSenderEnd<AbstractLamportMessage> out : outgoing.values()) {
-			out.put(msg);
-			}
+			// Increment the Lamport Clock
+			clock++;
+			
+			// Set the message clock
+			msg.setClock(clock);
+			
+			// Send messages
+			for (PointToPointQueueSenderEnd<AbstractLamportMessage> out : outgoing.values())
+				out.put(msg);
+			
 		}
     }
 	
