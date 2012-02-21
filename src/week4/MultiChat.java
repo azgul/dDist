@@ -65,12 +65,12 @@ public class MultiChat {
 	public static void main(String[] args){
 		MultiChat mc;
 		if(args.length == 3){
-			int oPort = Integer.getInteger(args[1]);
-			int sPort = Integer.getInteger(args[2]);
+			int oPort = Integer.parseInt(args[1]);
+			int sPort = Integer.parseInt(args[2]);
 			mc = new MultiChat(args[0],oPort,sPort);
 		}
 		else if(args.length == 2){
-			int sPort = Integer.getInteger(args[1]);
+			int sPort = Integer.parseInt(args[1]);
 			mc = new MultiChat(args[0],sPort);
 		}
 		else if (args.length == 1)
