@@ -12,52 +12,46 @@ import week4.multicast.*;
  * @author Martin
  */
 public class TotallyOrderedMultiCastStressTest {
-	private ChatQueue q1;
-	private ChatQueue q2;
-	private ChatQueue q3;
-	private ChatQueue q4;
 	private int port = 1337;
+	private int peers = 5;
+	private int passes = 5;
+	private ChatQueue[] queue;
 	
 	@Before
 	public void setup() {
-		q1 = new ChatQueue();
-		q2 = new ChatQueue();
-		q3 = new ChatQueue();
-		q4 = new ChatQueue();
+		queue = new ChatQueue[peers];
+		
+		for(int p=0; p<peers; p++)
+			queue[p] = new ChatQueue();
 		
 		try {
-			q1.createGroup(port, MulticastQueue.DeliveryGuarantee.FIFO);
-			q2.joinGroup(port+1, new InetSocketAddress("localhost", port), MulticastQueue.DeliveryGuarantee.FIFO);
-			q3.joinGroup(port+2, new InetSocketAddress("localhost", port+1), MulticastQueue.DeliveryGuarantee.FIFO);
-			q4.joinGroup(port+3, new InetSocketAddress("localhost", port+2), MulticastQueue.DeliveryGuarantee.FIFO);
+			queue[0].createGroup(port, MulticastQueue.DeliveryGuarantee.FIFO);
+			queue[1].joinGroup(port+1, new InetSocketAddress("localhost", port), MulticastQueue.DeliveryGuarantee.FIFO);
+			queue[2].joinGroup(port+2, new InetSocketAddress("localhost", port+1), MulticastQueue.DeliveryGuarantee.FIFO);
+			queue[3].joinGroup(port+3, new InetSocketAddress("localhost", port+2), MulticastQueue.DeliveryGuarantee.FIFO);
+			queue[4].joinGroup(port+4, new InetSocketAddress("localhost", port+3), MulticastQueue.DeliveryGuarantee.FIFO);
 			
 		} catch (IOException e) {}
 	}
 	
 	@Test
 	public void doesItWork() {
-		int x=5;
-		for (int i=0; i<x;i++) {
-			q1.put("test1");
-			q2.put("test2");
-			q3.put("test3");
-			q4.put("test4");
+		for (int i=0; i<passes;i++) {
+			for (ChatQueue q : queue)
+				q.put(Integer.toString(i));
 		}
 		
-		MulticastMessage m1;
-		MulticastMessage m2;
-		MulticastMessage m3;
-		MulticastMessage m4;
+		MulticastMessage[] message = new MulticastMessage[peers];
 		
-		for (int i=0; i<(x*4);i++) {
-			m1 = q1.get();
-			m2 = q2.get();
-			m3 = q3.get();
-			m4 = q4.get();
-			
-			assertEquals(m1.toString(), m2.toString());
-			assertEquals(m2.toString(), m3.toString());
-			assertEquals(m3.toString(), m4.toString());
+		for (int i=0; i<(passes*peers);i++) {
+			for (int j=0; j<peers; j++) {
+				message[j] = queue[j].get();
+			}
+							
+			for (int k=0; k<peers; k++) {
+				if (k+1 < message.length)
+					assertEquals(message[k].toString(), message[k+1].toString());
+			}
 		}
 	}
 }
