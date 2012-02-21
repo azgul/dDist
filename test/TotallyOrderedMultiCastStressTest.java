@@ -38,7 +38,7 @@ public class TotallyOrderedMultiCastStressTest {
 	public void doesItWork() {
 		for (int i=0; i<passes;i++) {
 			for (int j=0; j<peers; j++)
-				queue[j].put(j);
+				queue[j].put(Integer.toString(j));
 		}
 		
 		MulticastMessage[] message = new MulticastMessage[peers];
