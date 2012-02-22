@@ -23,4 +23,8 @@ public class BacklogMessage extends AbstractLamportMessage {
 	public ArrayList<AbstractLamportMessage> getBacklog(){
 		return backlog;
 	}
+	
+	public String toString(){
+		return "[Here's a backlog for you~]";
+	}
 }

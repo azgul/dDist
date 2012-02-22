@@ -18,6 +18,6 @@ public class JoinRequestMessage extends AbstractLamportMessage {
 	
 	@Override
 	public String toString(){
-		return String.format("[%s has requested to joined the chat!]", getSender());
+		return String.format("[%s has requested to join the chat!]", getSender());
 	}
 }

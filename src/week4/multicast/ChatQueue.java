@@ -127,6 +127,8 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 
 		// Send the known peer our address. 
 		JoinRequestMessage joinRequestMessage = new JoinRequestMessage(myAddress);
+		clock++;
+		joinRequestMessage.setClock(clock);
 		out.put(joinRequestMessage);
 		
 		// When the known peer receives the join request it will
@@ -158,25 +160,22 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			// Update the lamport clock
 			clock = Math.max(msg.getClock(), clock)+1;
 			
-			System.out.println("Got message (f: "+msg.getSender()+" - t:"+myAddress+"): "+msg+" ("+msg.hashCode()+")");
+			System.out.println("(my: "+myAddress.getPort()+" - sender: "+msg.getSender().getPort()+") Got message: "+msg+" ("+msg.hashCode()+")");
 			
-			synchronized(acknowledgements){
-				if( (msg instanceof ChatMessage) && !(msg instanceof AcknowledgeMessage) ) {
-					// Add current peers to acknowledge map if this is not an AcknowledgeMessage
-					HashSet<InetSocketAddress> ackList = (HashSet<InetSocketAddress>) hasConnectionToUs;
-					acknowledgements.put(msg.hashCode(),ackList);
-					// Send acknowledgement
-					AbstractLamportMessage ack = new AcknowledgeMessage(myAddress, msg);
-					sendToAllExceptMe(ack);
-					System.out.println("sending ack: my:"+myAddress+" - sender:" + msg.getSender() + " ("+clock+") "+msg.hashCode());
-				}
+	
+			if( shouldHandleMessage(msg) ) {
+				addMsgToAcknowledgements(msg);
+
+				// Send acknowledgement
+				AbstractLamportMessage ack = new AcknowledgeMessage(myAddress, msg);
+				sendToAllExceptMe(ack);
+				System.out.println("(my: "+myAddress.getPort()+" - sender: " + msg.getSender().getPort() + ") sending ack: ("+clock+") "+msg.hashCode());
 			}
 			
 			if (msg instanceof ChatMessage) {
 				ChatMessage cmsg = (ChatMessage)msg;
 				handle(cmsg);
 			} else if(msg instanceof AcknowledgeMessage){
-				System.out.println("Ready to handle ack msg");
 				AcknowledgeMessage amsg = (AcknowledgeMessage) msg;
 				handle(amsg);
 			} else if (msg instanceof JoinRequestMessage) {
@@ -210,6 +209,22 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		noMoreGetsWillBeAdded = true;
 		synchronized (pendingGets) {
 			pendingGets.notifyAll();
+		}
+	}
+	
+	private boolean shouldHandleMessage(AbstractLamportMessage msg){
+		return !(msg instanceof JoinRelayMessage) && !(msg instanceof AcknowledgeMessage) && !(msg instanceof JoinRequestMessage) && !(msg instanceof BacklogMessage) && !(msg instanceof WelcomeMessage);
+	}
+	
+	private void addMsgToAcknowledgements(AbstractLamportMessage msg){
+		synchronized(acknowledgements){
+			if(acknowledgements.containsKey(msg.hashCode()) || !shouldHandleMessage(msg))
+				return;
+			
+			// Add current peers to acknowledge map if this is not an AcknowledgeMessage
+			HashSet<InetSocketAddress> ackList = (HashSet<InetSocketAddress>) hasConnectionToUs;
+			acknowledgements.put(msg.hashCode(),ackList);
+			System.out.println("Added message ("+msg+") to ack: "+msg.hashCode());
 		}
 	}
 	
@@ -274,7 +289,10 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		
 		// Connect to the new peer and bid him welcome. 
 		PointToPointQueueSenderEnd<AbstractLamportMessage> out = connectToPeerAt(msg.getAddressOfJoiner());
-		out.put(new WelcomeMessage(myAddress));
+		WelcomeMessage wmsg = new WelcomeMessage(myAddress);
+		clock++;
+		wmsg.setClock(clock);
+		out.put(wmsg);
 		// When this peer receives the wellcome message it will
 		// connect to us, so let us remember that she has a connection
 		// to us.
@@ -291,16 +309,22 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			hasConnectionToUs.add(msg.getSender()); 
 		}
 		
+		JoinRelayMessage jrmsg = new JoinRelayMessage(myAddress, msg.getSender());
+		jrmsg.setClock(clock+1);
+		
 		// Buffer a join message so it can be gotten. 
 		addAndNotify(pendingGets, msg);
-		addAndNotify(pendingGets, new JoinRelayMessage(myAddress, msg.getSender()));
+		addAndNotify(pendingGets, jrmsg);
 
 		// Then we tell the rest of the group that we have a new member.
-		sendToAllExceptMe(new JoinRelayMessage(myAddress, msg.getSender()));
+		sendToAllExceptMe(jrmsg);
 		
 		// Then we connect to the new peer. 
 		PointToPointQueueSenderEnd<AbstractLamportMessage> out = connectToPeerAt(msg.getSender());
-		out.put(new BacklogMessage(myAddress, backlog));
+		BacklogMessage bmsg = new BacklogMessage(myAddress, backlog);
+		clock++;
+		bmsg.setClock(clock);
+		out.put(bmsg);
 	}
 	
 	private void handle(ChatMessage msg){
@@ -308,7 +332,6 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	}
 	
 	private  void handle(AcknowledgeMessage msg){
-		System.out.println("Ack received.");
 		addAndNotify(acknowledgements,msg);
 	}
 
@@ -344,7 +367,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 				// By contract we signal shutdown by returning null.
 			} else {
 				AbstractLamportMessage msg = pendingGets.peek();
-				System.out.println("Waiting for ack...");
+				
 				waitForAcknowledgementsOrReceivedAll(msg);
 				// Acknowledgement for this message is now done, so remove the entry in the map
 				acknowledgements.remove(msg.hashCode());
@@ -388,9 +411,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			String msg;
 			while ((msg = pendingSends.poll()) != null) {
 				AbstractLamportMessage lmsg = new ChatMessage(myAddress, msg);
-				lmsg.setClock(clock);
 				sendToAll(lmsg);
-				System.out.println(lmsg.getSender() + " sent: " + lmsg.toString() + " ("+lmsg.getClock()+")");
 				waitForPendingSendsOrLeaving();
 			}
 			synchronized (outgoing) {
@@ -476,11 +497,14 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
     }
     private void sendToAllExceptMe(AbstractLamportMessage msg) {
 		if (isLeaving!=true) {
+			
 			// Increment the Lamport Clock
 			clock++;
 			
 			// Set the message clock
 			msg.setClock(clock);
+			
+			addMsgToAcknowledgements(msg);
 			
 			// Send messages
 			for (PointToPointQueueSenderEnd<AbstractLamportMessage> out : outgoing.values()){
@@ -494,16 +518,18 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	 * Used by callers to wait for acknowledgements
 	 */
 	private void waitForAcknowledgementsOrReceivedAll(AbstractLamportMessage msg){
+		if(!shouldHandleMessage(msg))
+			return;
+			
 		synchronized(acknowledgements){
 			// Clone our HashSet of missing acknowledgements to get intersection with connected peers
 			HashSet<InetSocketAddress> ackClone = new HashSet<InetSocketAddress>();
-			System.out.println("Ack wait: "+msg+" - "+msg.hashCode());
+			System.out.println("(my: "+myAddress.getPort()+" - sender: "+msg.getSender().getPort()+") Ack wait: "+msg+" - "+msg.hashCode());
 			if(acknowledgements.contains(msg.hashCode())){
 				ackClone = (HashSet<InetSocketAddress>)acknowledgements.get(msg.hashCode()).clone();
 				ackClone.retainAll(hasConnectionToUs);
 			}
-			while(!noMoreGetsWillBeAdded && !(acknowledgements.containsKey(msg.hashCode()) &&
-						ackClone.isEmpty())){
+			while(!noMoreGetsWillBeAdded && !(acknowledgements.containsKey(msg.hashCode()) && ackClone.isEmpty())){
 				try {
 					acknowledgements.wait();
 					// Update our clone
@@ -554,13 +580,17 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	 * Used to add acknowledgement messages to map.
 	 */
 	protected void addAndNotify(ConcurrentHashMap<Integer,HashSet<InetSocketAddress>> map, AcknowledgeMessage msg){
-		System.out.println(String.format("Adding and notifying acknowledgement: %s (%s)", msg, msg.getClock()));
+		System.out.println(String.format("(my: %s - sender: %s) Adding and notifying acknowledgement - %s (%s)", myAddress.getPort(), msg.getSender().getPort(), msg, msg.getClock()));
 		int key = msg.getMessage().hashCode();
 		InetSocketAddress value = msg.getSender();
 		
 		synchronized(map){
 			if(!map.containsKey(key)){
-				System.out.println(myAddress + ": Key doesnt exist... "+key);
+				Set<Integer> keys = map.keySet();
+				for(Integer i : keys)
+					System.out.println("Key in map: "+i);
+				
+				System.out.println("Key doesnt exist... "+key+" - "+map.isEmpty());
 				return;
 			}
 			

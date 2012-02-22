@@ -38,10 +38,12 @@ public class TotallyOrderedMultiCastStressTest {
 	
 	@Test
 	public void doesItWork() {
-		try {
+		try{
 			Thread.sleep(2000);
-		} catch (InterruptedException ex) {}
-		
+		}catch(InterruptedException e){
+			System.err.println("Interrupted...");
+			return;
+		}
 		for (int i=0; i<passes;i++) {
 			for (int j=0; j<peers; j++)
 				queue[j].put(Integer.toString(j));
