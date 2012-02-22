@@ -4,6 +4,7 @@
  */
 package week4;
 
+import javax.swing.JTextArea;
 import multicast.MulticastMessage;
 import multicast.MulticastMessageLeave;
 import multicast.MulticastQueue;
@@ -15,9 +16,11 @@ import multicast.MulticastQueue;
 public class ChatListener extends Thread{
 	MulticastQueue queue;
 	long timeout = 1;
+	private JTextArea chat;
 	
-	public ChatListener(MulticastQueue queue){
+	public ChatListener(MulticastQueue queue, JTextArea chatArea){
 		this.queue = queue;
+		chat = chatArea;
 	}
 
 	@Override
@@ -26,8 +29,11 @@ public class ChatListener extends Thread{
 		
 		try{
 			while(true){
-				if((msg = queue.get()) != null)
-					System.out.println(msg.toString());
+				if((msg = queue.get()) != null){
+					//System.out.println(msg.toString());
+					chat.append(msg.toString() + "\r\n");
+					chat.setCaretPosition(chat.getDocument().getLength());
+				}
 				
 				Thread.sleep(timeout);
 			}
