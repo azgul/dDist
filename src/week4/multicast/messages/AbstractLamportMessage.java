@@ -33,4 +33,15 @@ public abstract class AbstractLamportMessage extends MulticastMessage implements
 		
 		return clock == ((AbstractLamportMessage)other).clock;
 	}
+	
+	@Override
+	public int hashCode(){
+		int hash = 1;
+		
+		hash *= 17 * getSender().hashCode();
+		hash *= 13 * toString().hashCode();
+		hash *= 23 * clock;
+		
+		return hash;
+	}
 }

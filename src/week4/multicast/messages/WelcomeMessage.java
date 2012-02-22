@@ -15,4 +15,8 @@ public class WelcomeMessage extends AbstractLamportMessage{
 	public WelcomeMessage(InetSocketAddress addr){
 		super(addr);
 	}
+	
+	public String toString(){
+		return "[Welcome to the group!]";
+	}
 }
