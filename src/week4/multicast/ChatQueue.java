@@ -4,12 +4,10 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 import multicast.*;
 import week4.multicast.messages.*;
 
@@ -62,7 +60,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
     /**
      * Objects pending delivering locally.
      */
-    private ConcurrentLinkedQueue<AbstractLamportMessage> pendingGets;
+    private PriorityQueue<AbstractLamportMessage> pendingGets;
     
     /**
      * Objects pending sending.
@@ -71,14 +69,22 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	
 	private ArrayList<AbstractLamportMessage> backlog;
 	
+	private static int QUEUE_CAP = 10;
+	
+	/**
+	 * Acknowledgement map
+	 */
+	private ConcurrentHashMap<Integer,HashSet<InetSocketAddress>> acknowledgements;
+	
 	public ChatQueue(){
 		clock = 0;
 		incoming = new PointToPointQueueReceiverEndNonRobust<AbstractLamportMessage>();
-		pendingGets = new ConcurrentLinkedQueue<AbstractLamportMessage>();
+		pendingGets = new PriorityQueue<AbstractLamportMessage>(QUEUE_CAP, new LamportMessageComparator());
 		pendingSends = new ConcurrentLinkedQueue<String>();
 		outgoing = new ConcurrentHashMap<InetSocketAddress,PointToPointQueueSenderEnd<AbstractLamportMessage>>();
 		hasConnectionToUs = new HashSet<InetSocketAddress>();
 		backlog = new ArrayList<AbstractLamportMessage>();
+		acknowledgements = new ConcurrentHashMap<Integer,HashSet<InetSocketAddress>>();
 		
 		sendingThread = new SendingThread();
 		sendingThread.start();
@@ -149,13 +155,30 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		* queue.
 		*/
 		while ((msg = incoming.get()) != null) {
-			
 			// Update the lamport clock
 			clock = Math.max(msg.getClock(), clock)+1;
+			
+			System.out.println("Got message (f: "+msg.getSender()+" - t:"+myAddress+"): "+msg+" ("+msg.hashCode()+")");
+			
+			synchronized(acknowledgements){
+				if( (msg instanceof ChatMessage) && !(msg instanceof AcknowledgeMessage) ) {
+					// Add current peers to acknowledge map if this is not an AcknowledgeMessage
+					HashSet<InetSocketAddress> ackList = (HashSet<InetSocketAddress>) hasConnectionToUs;
+					acknowledgements.put(msg.hashCode(),ackList);
+					// Send acknowledgement
+					AbstractLamportMessage ack = new AcknowledgeMessage(myAddress, msg);
+					sendToAllExceptMe(ack);
+					System.out.println("sending ack: my:"+myAddress+" - sender:" + msg.getSender() + " ("+clock+") "+msg.hashCode());
+				}
+			}
 			
 			if (msg instanceof ChatMessage) {
 				ChatMessage cmsg = (ChatMessage)msg;
 				handle(cmsg);
+			} else if(msg instanceof AcknowledgeMessage){
+				System.out.println("Ready to handle ack msg");
+				AcknowledgeMessage amsg = (AcknowledgeMessage) msg;
+				handle(amsg);
 			} else if (msg instanceof JoinRequestMessage) {
 				JoinRequestMessage jrmsg = (JoinRequestMessage)msg;
 				handle(jrmsg);
@@ -175,6 +198,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 				BacklogMessage bmsg = (BacklogMessage) msg;
 				handle(bmsg);
 			}
+			
 			
 			// Save the backlog
 			backlog.add(msg);
@@ -282,6 +306,11 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	private void handle(ChatMessage msg){
 		addAndNotify(pendingGets, msg);
 	}
+	
+	private  void handle(AcknowledgeMessage msg){
+		System.out.println("Ack received.");
+		addAndNotify(acknowledgements,msg);
+	}
 
 	private void printBacklog(){
 		for(AbstractLamportMessage msg : backlog)
@@ -314,6 +343,11 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 				return null;
 				// By contract we signal shutdown by returning null.
 			} else {
+				AbstractLamportMessage msg = pendingGets.peek();
+				System.out.println("Waiting for ack...");
+				waitForAcknowledgementsOrReceivedAll(msg);
+				// Acknowledgement for this message is now done, so remove the entry in the map
+				acknowledgements.remove(msg.hashCode());
 				return pendingGets.poll();
 			}
 		}
@@ -353,10 +387,10 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			waitForPendingSendsOrLeaving();
 			String msg;
 			while ((msg = pendingSends.poll()) != null) {
-				clock++;
 				AbstractLamportMessage lmsg = new ChatMessage(myAddress, msg);
 				lmsg.setClock(clock);
 				sendToAll(lmsg);
+				System.out.println(lmsg.getSender() + " sent: " + lmsg.toString() + " ("+lmsg.getClock()+")");
 				waitForPendingSendsOrLeaving();
 			}
 			synchronized (outgoing) {
@@ -432,6 +466,8 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
      */
     private void sendToAll(AbstractLamportMessage msg) {
 		if (isLeaving!=true) {
+			// Set the message clock to the current clock + 1 since the clock will be incremented in sendToAllExceptMe.
+			msg.setClock(clock+1);
 			/* Send to self. */
 			incoming.put(msg);
 			/* Then send to the others. */
@@ -440,18 +476,42 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
     }
     private void sendToAllExceptMe(AbstractLamportMessage msg) {
 		if (isLeaving!=true) {
-			for (PointToPointQueueSenderEnd<AbstractLamportMessage> out : outgoing.values()) {
-			out.put(msg);
+			// Increment the Lamport Clock
+			clock++;
+			
+			// Set the message clock
+			msg.setClock(clock);
+			
+			// Send messages
+			for (PointToPointQueueSenderEnd<AbstractLamportMessage> out : outgoing.values()){
+				out.put(msg);
 			}
 		}
     }
 	
-	private void sendToRandom(AbstractLamportMessage msg){
-		Random generator = new Random();
-		Object[] values = outgoing.values().toArray();
-		PointToPointQueueSenderEnd<AbstractLamportMessage> randomPeer = (PointToPointQueueSenderEnd<AbstractLamportMessage>) values[generator.nextInt(values.length)];
-		
-		randomPeer.put(msg);
+	
+	/**
+	 * Used by callers to wait for acknowledgements
+	 */
+	private void waitForAcknowledgementsOrReceivedAll(AbstractLamportMessage msg){
+		synchronized(acknowledgements){
+			// Clone our HashSet of missing acknowledgements to get intersection with connected peers
+			HashSet<InetSocketAddress> ackClone = new HashSet<InetSocketAddress>();
+			System.out.println("Ack wait: "+msg+" - "+msg.hashCode());
+			if(acknowledgements.contains(msg.hashCode())){
+				ackClone = (HashSet<InetSocketAddress>)acknowledgements.get(msg.hashCode()).clone();
+				ackClone.retainAll(hasConnectionToUs);
+			}
+			while(!noMoreGetsWillBeAdded && !(acknowledgements.containsKey(msg.hashCode()) &&
+						ackClone.isEmpty())){
+				try {
+					acknowledgements.wait();
+					// Update our clone
+					ackClone = (HashSet<InetSocketAddress>)acknowledgements.get(msg.hashCode()).clone();
+					ackClone.retainAll(hasConnectionToUs);
+				}catch(InterruptedException e) {}
+			}
+		}
 	}
 	
 	/**
@@ -489,4 +549,29 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			coll.notify();
 		}
     }
+	
+	/**
+	 * Used to add acknowledgement messages to map.
+	 */
+	protected void addAndNotify(ConcurrentHashMap<Integer,HashSet<InetSocketAddress>> map, AcknowledgeMessage msg){
+		System.out.println(String.format("Adding and notifying acknowledgement: %s (%s)", msg, msg.getClock()));
+		int key = msg.getMessage().hashCode();
+		InetSocketAddress value = msg.getSender();
+		
+		synchronized(map){
+			if(!map.containsKey(key)){
+				System.out.println("Key doesnt exist... "+key);
+				return;
+			}
+			
+			HashSet<InetSocketAddress> ackList = map.get(key);
+			
+			if(ackList.contains(value))
+				ackList.remove(value);
+			
+			map.put(key,ackList);
+			
+			map.notify();
+		}
+	}
 }

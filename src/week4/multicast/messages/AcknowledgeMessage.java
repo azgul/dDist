@@ -11,11 +11,18 @@ import java.net.InetSocketAddress;
  * @author larss
  */
 public class AcknowledgeMessage extends AbstractLamportMessage {
-	public AcknowledgeMessage(InetSocketAddress addr){
+	AbstractLamportMessage msg;
+	
+	public AcknowledgeMessage(InetSocketAddress addr, AbstractLamportMessage msg){
 		super(addr);
+		this.msg = msg;
 	}
 	
 	public String toString(){
-		return String.format("[Acknowledge from %s]", getSender());
+		return String.format("[Acknowledge of %s (%s) from %s]", msg.hashCode(), msg, getSender());
+	}
+	
+	public AbstractLamportMessage getMessage(){
+		return msg;
 	}
 }

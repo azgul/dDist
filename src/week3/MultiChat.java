@@ -77,7 +77,7 @@ public class MultiChat {
 	
 	private void initClient(String host) throws IOException {
 		System.out.println("Joining TrollFace-group~");
-		queue.joinGroup(port, new InetSocketAddress(host, port), MulticastQueue.DeliveryGuarantee.NONE);
+		queue.joinGroup(port, new InetSocketAddress(host, port), MulticastQueue.DeliveryGuarantee.FIFO);
 	}
 	
 	private void initServer() throws UnknownHostException, IOException{

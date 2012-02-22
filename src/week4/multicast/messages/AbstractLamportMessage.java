@@ -25,4 +25,12 @@ public abstract class AbstractLamportMessage extends MulticastMessage implements
 	public void setClock(int clock){
 		this.clock = clock;
 	}
+	
+	public boolean equals(Object other){
+		if(!getClass().equals(other.getClass())){
+			return false;
+		}
+		
+		return clock == ((AbstractLamportMessage)other).clock;
+	}
 }
