@@ -15,7 +15,7 @@ import week4.multicast.messages.AbstractLamportMessage;
  *
  * @author Martin
  */
-public class TotallyOrderedMultiCastStressTest extends TestCase {
+public class TotallyOrderedMultiCastStressTest{
 	private int port = 1337;
 	private int peers = 2;
 	private int passes = 1;
