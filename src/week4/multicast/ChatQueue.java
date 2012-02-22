@@ -560,7 +560,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		
 		synchronized(map){
 			if(!map.containsKey(key)){
-				System.out.println("Key doesnt exist... "+key);
+				System.out.println(myAddress + ": Key doesnt exist... "+key);
 				return;
 			}
 			

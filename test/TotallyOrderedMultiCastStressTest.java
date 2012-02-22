@@ -1,5 +1,7 @@
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import multicast.MulticastMessage;
 import multicast.MulticastQueue;
 import org.junit.*;
@@ -36,6 +38,10 @@ public class TotallyOrderedMultiCastStressTest {
 	
 	@Test
 	public void doesItWork() {
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException ex) {}
+		
 		for (int i=0; i<passes;i++) {
 			for (int j=0; j<peers; j++)
 				queue[j].put(Integer.toString(j));
