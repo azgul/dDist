@@ -212,7 +212,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		}
 	}
 	
-	private boolean shouldHandleMessage(AbstractLamportMessage msg){
+	public boolean shouldHandleMessage(AbstractLamportMessage msg){
 		return !(msg instanceof JoinRelayMessage) && !(msg instanceof AcknowledgeMessage) && !(msg instanceof JoinRequestMessage) && !(msg instanceof BacklogMessage) && !(msg instanceof WelcomeMessage);
 	}
 	

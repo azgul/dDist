@@ -8,6 +8,7 @@ import org.junit.*;
 import static org.junit.Assert.*;
 import week4.*;
 import week4.multicast.*;
+import week4.multicast.messages.AbstractLamportMessage;
 
 /**
  *
@@ -49,11 +50,13 @@ public class TotallyOrderedMultiCastStressTest {
 				queue[j].put(Integer.toString(j));
 		}
 		
-		MulticastMessage[] message = new MulticastMessage[peers];
+		AbstractLamportMessage[] message = new AbstractLamportMessage[peers];
 		
 		for (int i=0; i<(passes*peers);i++) {
 			for (int j=0; j<peers; j++) {
 				message[j] = queue[j].get();
+					while (!queue[j].shouldHandleMessage(message[j]))
+						message[j] = queue[j].get();
 			}
 							
 			for (int k=0; k<peers; k++) {
@@ -61,7 +64,7 @@ public class TotallyOrderedMultiCastStressTest {
 					assertEquals(message[k].toString(), message[k+1].toString());
 			}
 			
-			message = new MulticastMessage[peers];
+			message = new AbstractLamportMessage[peers];
 		}
 	}
 }
