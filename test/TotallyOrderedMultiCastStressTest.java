@@ -52,7 +52,7 @@ public class TotallyOrderedMultiCastStressTest {
 		
 		for(int i = 0; i < peers; i++){
 			queue[i].leaveGroup();
-			wait(1);
+			wait(2);
 		}
 		
 		HashMap<Integer,ArrayList<AbstractLamportMessage>> messages = new HashMap<Integer,ArrayList<AbstractLamportMessage>>();

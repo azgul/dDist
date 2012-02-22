@@ -185,6 +185,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 				JoinRelayMessage jmsg = (JoinRelayMessage)msg;
 				handle(jmsg);
 			} else if (msg instanceof LeaveGroupMessage) {
+				System.out.println("(my: "+myAddress.getPort()+" - sender: " + msg.getSender().getPort() + ") Got leave group message");
 				LeaveGroupMessage lmsg = (LeaveGroupMessage)msg;
 				handle(lmsg);
 			} else if (msg instanceof WelcomeMessage) {
@@ -213,7 +214,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	}
 	
 	public boolean shouldHandleMessage(AbstractLamportMessage msg){
-		return !(msg instanceof LeaveGroupMessage) && !(msg instanceof JoinRelayMessage) && !(msg instanceof AcknowledgeMessage) && !(msg instanceof JoinRequestMessage) && !(msg instanceof BacklogMessage) && !(msg instanceof WelcomeMessage);
+		return (msg instanceof ChatMessage); //!(msg instanceof LeaveGroupMessage) && !(msg instanceof JoinRelayMessage) && !(msg instanceof AcknowledgeMessage) && !(msg instanceof JoinRequestMessage) && !(msg instanceof BacklogMessage) && !(msg instanceof WelcomeMessage);
 	}
 	
 	private void addMsgToAcknowledgements(AbstractLamportMessage msg){
@@ -237,16 +238,21 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	private void handle(LeaveGroupMessage msg){
 		InetSocketAddress address = msg.getSender();
 		if (!address.equals(myAddress)){
+			System.err.println("(my: "+myAddress.getPort()+" - sender: " + msg.getSender().getPort() + ") Leaving and DCing");
 			addAndNotify(pendingGets, msg);
 			disconnectFrom(address);
 		}else{
 			// That was my own leave message. If I'm the only one left
 			// in the group, then this means that I can safely shut
 			// down.
-			if (hasConnectionToUs.isEmpty())
+			if (hasConnectionToUs.isEmpty()){
 				incoming.shutdown();
+				System.out.println("------Shutdown~");
+			}else{
+				System.err.println(hasConnectionToUs);
+			}
 			
-			System.out.println("[You have left the group]");
+			System.out.println(String.format("[You (%s) have left the group]", myAddress.getPort()));
 		}
 	}
 	
@@ -361,17 +367,17 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		// Now an object is ready in pendingObjects, unless we are
 		// shutting down. 
 		synchronized (pendingGets) {
-			System.out.println("Before normal sleep");
+			System.out.println(myAddress.getPort()+" Before normal sleep");
 			waitForPendingGetsOrReceivedAll();
-			System.out.println("After normal sleep");
+			System.out.println(myAddress.getPort()+" After normal sleep");
 			if (pendingGets.isEmpty()) {
 				return null;
 				// By contract we signal shutdown by returning null.
 			} else {
 				AbstractLamportMessage msg = pendingGets.peek();
-				System.out.println("Before sick sleep");
+				System.out.println(myAddress.getPort()+" Before sick sleep");
 				waitForAcknowledgementsOrReceivedAll(msg);
-				System.out.println("After sick sleep");
+				System.out.println(myAddress.getPort()+" After sick sleep");
 				// Acknowledgement for this message is now done, so remove the entry in the map
 				acknowledgements.remove(msg.hashCode());
 				return pendingGets.poll();
@@ -453,7 +459,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			PointToPointQueueSenderEnd<AbstractLamportMessage> out = outgoing.get(address);
 			if (out != null) {
 				outgoing.remove(address);
-				//out.put(new GoodbuyMessage(myAddress));
+				out.put(new GoodbyeMessage(myAddress));
 				out.shutdown();
 			}
 		}
