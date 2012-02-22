@@ -10,6 +10,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.PriorityBlockingQueue;
+import javax.swing.DefaultListModel;
+import javax.swing.JList;
+import javax.swing.ListModel;
 import multicast.*;
 import week4.multicast.messages.*;
 
@@ -75,6 +78,8 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	
 	private static int QUEUE_CAP = 10;
 	
+	private DefaultListModel userlist;
+	
 	/**
 	 * Acknowledgement map
 	 */
@@ -92,6 +97,26 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		
 		sendingThread = new SendingThread();
 		sendingThread.start();
+	}
+	
+	public void setUserList(DefaultListModel list){
+		userlist = list;
+	}
+	
+	private void addToUserList(String user){
+		System.err.println("Trying to add??");
+		if(userlist != null){
+			System.err.println("Adding user...");
+			userlist.addElement(user);
+		}
+	}
+	
+	private void removeFromUserList(String user){
+		if(userlist != null){
+			if(userlist.contains(user)){
+				userlist.removeElement(user);
+			}
+		}
 	}
 	
 	@Override
@@ -247,6 +272,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			debug("(my: "+myAddress.getPort()+" - sender: " + msg.getSender().getPort() + ") Leaving and DCing");
 			addAndNotify(pendingGets, msg);
 			disconnectFrom(address);
+			removeFromUserList(address.getHostName());
 		}else{
 			// That was my own leave message. If I'm the only one left
 			// in the group, then this means that I can safely shut
@@ -313,6 +339,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		synchronized(hasConnectionToUs) {
 			hasConnectionToUs.add(msg.getAddressOfJoiner());
 		}
+		addToUserList(msg.getAddressOfJoiner().getHostName());
 	}
 	
 	private void handle(JoinRequestMessage msg){
@@ -321,6 +348,8 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		synchronized(hasConnectionToUs) {
 			hasConnectionToUs.add(msg.getSender()); 
 		}
+		
+		addToUserList(msg.getSender().getHostName());
 		
 		JoinRelayMessage jrmsg = new JoinRelayMessage(myAddress, msg.getSender());
 		jrmsg.setClock(clock+1);
