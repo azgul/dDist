@@ -213,7 +213,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	}
 	
 	public boolean shouldHandleMessage(AbstractLamportMessage msg){
-		return !(msg instanceof JoinRelayMessage) && !(msg instanceof AcknowledgeMessage) && !(msg instanceof JoinRequestMessage) && !(msg instanceof BacklogMessage) && !(msg instanceof WelcomeMessage);
+		return !(msg instanceof LeaveGroupMessage) && !(msg instanceof JoinRelayMessage) && !(msg instanceof AcknowledgeMessage) && !(msg instanceof JoinRequestMessage) && !(msg instanceof BacklogMessage) && !(msg instanceof WelcomeMessage);
 	}
 	
 	private void addMsgToAcknowledgements(AbstractLamportMessage msg){
@@ -361,14 +361,17 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		// Now an object is ready in pendingObjects, unless we are
 		// shutting down. 
 		synchronized (pendingGets) {
+			System.out.println("Before normal sleep");
 			waitForPendingGetsOrReceivedAll();
+			System.out.println("After normal sleep");
 			if (pendingGets.isEmpty()) {
 				return null;
 				// By contract we signal shutdown by returning null.
 			} else {
 				AbstractLamportMessage msg = pendingGets.peek();
-				
+				System.out.println("Before sick sleep");
 				waitForAcknowledgementsOrReceivedAll(msg);
+				System.out.println("After sick sleep");
 				// Acknowledgement for this message is now done, so remove the entry in the map
 				acknowledgements.remove(msg.hashCode());
 				return pendingGets.poll();
