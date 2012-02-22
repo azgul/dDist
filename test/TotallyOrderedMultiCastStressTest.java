@@ -1,9 +1,8 @@
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import junit.framework.TestCase;
 import multicast.MulticastMessage;
 import multicast.MulticastQueue;
 import org.junit.*;
@@ -16,7 +15,7 @@ import week4.multicast.messages.AbstractLamportMessage;
  *
  * @author Martin
  */
-public class TotallyOrderedMultiCastStressTest {
+public class TotallyOrderedMultiCastStressTest extends TestCase {
 	private int port = 1337;
 	private int peers = 2;
 	private int passes = 1;
@@ -41,40 +40,20 @@ public class TotallyOrderedMultiCastStressTest {
 	
 	@Test
 	public void doesItWork() {
-		wait(3);
-		
+		try{
+			Thread.sleep(2000);
+		}catch(InterruptedException e){
+			System.err.println("Interrupted...");
+			return;
+		}
 		for (int i=0; i<passes;i++) {
 			for (int j=0; j<peers; j++)
 				queue[j].put(Integer.toString(j));
 		}
 		
-		wait(1);
+		AbstractLamportMessage[] message = new AbstractLamportMessage[peers];
 		
-		for(int i = 0; i < peers; i++){
-			queue[i].leaveGroup();
-			wait(2);
-		}
-		
-		HashMap<Integer,ArrayList<AbstractLamportMessage>> messages = new HashMap<Integer,ArrayList<AbstractLamportMessage>>();
-		AbstractLamportMessage msg;
-		
-		for(int i = 0; i < peers; i++){
-			while((msg = queue[i].get()) != null){
-				if(!messages.containsKey(i))
-					messages.put(i, new ArrayList<AbstractLamportMessage>());
-				
-				if(queue[i].shouldHandleMessage(msg)){
-					ArrayList<AbstractLamportMessage> message = messages.get(i);
-					message.add(msg);
-				}
-				System.out.println(":Æ");
-			}
-			System.out.println("Hvad skal jeg skrive?");
-		}
-		System.out.println("WHATUP FAGS");
-		System.out.println(messages);
-		
-		/*for (int i=0; i<(passes*peers);i++) {
+		for (int i=0; i<(passes*peers);i++) {
 			for (int j=0; j<peers; j++) {
 				message[j] = queue[j].get();
 					while (!queue[j].shouldHandleMessage(message[j]))
@@ -87,15 +66,6 @@ public class TotallyOrderedMultiCastStressTest {
 			}
 			
 			message = new AbstractLamportMessage[peers];
-		}*/
-	}
-	
-	public static void wait(int secs) {
-		try {
-			Thread.currentThread().sleep(secs*1000);
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(-1);
 		}
-    }
+	}
 }
