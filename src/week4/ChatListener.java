@@ -22,6 +22,10 @@ public class ChatListener extends Thread{
 		this.queue = queue;
 		chat = chatArea;
 	}
+	
+	public ChatListener(MulticastQueue queue){
+		this.queue = queue;
+	}
 
 	@Override
 	public void run() {
@@ -30,9 +34,12 @@ public class ChatListener extends Thread{
 		try{
 			while(true){
 				if((msg = queue.get()) != null){
-					//System.out.println(msg.toString());
-					chat.append(msg.toString() + "\r\n");
-					chat.setCaretPosition(chat.getDocument().getLength());
+					if(chat == null)
+						System.out.println(msg.toString());
+					else {
+						chat.append(msg.toString() + "\r\n");
+						chat.setCaretPosition(chat.getDocument().getLength());
+					}
 				}
 				
 				Thread.sleep(timeout);
