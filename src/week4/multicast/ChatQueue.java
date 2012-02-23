@@ -22,7 +22,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	 */
 	private int clock;
 	
-	private boolean debug = false;
+	private boolean debug = true;
 	
 	/**
      * The address on which we listen for incoming messages.
@@ -187,7 +187,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			// Update the lamport clock
 			clock = Math.max(msg.getClock(), clock)+1;
 			
-			debug("(my: "+myAddress.getPort()+" - sender: "+msg.getSender().getPort()+") Got message of type " + msg.getClass().getName() + ":  ("+msg.getClock()+")");
+			//debug("(my: "+myAddress.getPort()+" - sender: "+msg.getSender().getPort()+") Got message of type " + msg.getClass().getName() + ":  ("+msg.getClock()+")");
 			
 	
 			if( shouldHandleMessage(msg) ) {
@@ -196,7 +196,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 				// Send acknowledgement
 				AbstractLamportMessage ack = new AcknowledgeMessage(myAddress, msg.getClock());
 				sendToAllExceptMe(ack);
-				debug("(my: "+myAddress.getPort()+" - sender: " + msg.getSender().getPort() + ") sending ack: ("+clock+") "+msg.hashCode());
+				//debug("(my: "+myAddress.getPort()+" - sender: " + msg.getSender().getPort() + ") sending ack: ("+clock+") "+msg.hashCode());
 			}
 			
 			if (msg instanceof ChatMessage) {
@@ -212,7 +212,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 				JoinRelayMessage jmsg = (JoinRelayMessage)msg;
 				handle(jmsg);
 			} else if (msg instanceof LeaveGroupMessage) {
-				debug("(my: "+myAddress.getPort()+" - sender: " + msg.getSender().getPort() + ") Got leave group message");
+				//debug("(my: "+myAddress.getPort()+" - sender: " + msg.getSender().getPort() + ") Got leave group message");
 				LeaveGroupMessage lmsg = (LeaveGroupMessage)msg;
 				handle(lmsg);
 			} else if (msg instanceof WelcomeMessage) {
@@ -256,7 +256,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			// Add current peers to acknowledge map if this is not an AcknowledgeMessage
 			HashSet<InetSocketAddress> ackList = (HashSet<InetSocketAddress>) hasConnectionToUs;
 			acknowledgements.put(msg.getClock(),ackList);
-			debug("Added message (" + msg.getClass().getName() + ") to ack: "+msg.getClock());
+			//debug("Added message (" + msg.getClass().getName() + ") to ack: "+msg.getClock());
 		}
 	}
 	
@@ -269,7 +269,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	private void handle(LeaveGroupMessage msg){
 		InetSocketAddress address = msg.getSender();
 		if (!address.equals(myAddress)){
-			debug("(my: "+myAddress.getPort()+" - sender: " + msg.getSender().getPort() + ") Leaving and DCing");
+			//debug("(my: "+myAddress.getPort()+" - sender: " + msg.getSender().getPort() + ") Leaving and DCing");
 			addAndNotify(pendingGets, msg);
 			disconnectFrom(address);
 			removeFromUserList(address.getHostName());
@@ -279,12 +279,12 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			// down.
 			if (hasConnectionToUs.isEmpty()){
 				incoming.shutdown();
-				debug("------Shutdown~");
+				//debug("------Shutdown~");
 			}else{
-				debug(hasConnectionToUs.toString());
+				//debug(hasConnectionToUs.toString());
 			}
 			
-			debug(String.format("[You (%s) have left the group]", myAddress.getPort()));
+			//debug(String.format("[You (%s) have left the group]", myAddress.getPort()));
 		}
 	}
 	
@@ -373,7 +373,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		addAndNotify(pendingGets, msg);
 	}
 	
-	private  void handle(AcknowledgeMessage msg){
+	private void handle(AcknowledgeMessage msg){
 		addAndNotify(acknowledgements,msg);
 	}
 
@@ -404,17 +404,17 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		// Now an object is ready in pendingObjects, unless we are
 		// shutting down. 
 		synchronized (pendingGets) {
-			debug(myAddress.getPort()+" Before normal sleep");
+			//debug(myAddress.getPort()+" Before normal sleep");
 			waitForPendingGetsOrReceivedAll();
-			debug(myAddress.getPort()+" After normal sleep");
+			//debug(myAddress.getPort()+" After normal sleep");
 			if (pendingGets.isEmpty()) {
 				return null;
 				// By contract we signal shutdown by returning null.
 			} else {
 				AbstractLamportMessage msg = pendingGets.peek();
-				debug(myAddress.getPort()+" Before sick sleep");
+				//debug(myAddress.getPort()+" Before sick sleep");
 				waitForAcknowledgementsOrReceivedAll(msg);
-				debug(myAddress.getPort()+" After sick sleep");
+				//debug(myAddress.getPort()+" After sick sleep");
 				// Acknowledgement for this message is now done, so remove the entry in the map
 				acknowledgements.remove(msg.getClock());
 				msg = pendingGets.poll();
@@ -567,15 +567,15 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	 * Used by callers to wait for acknowledgements
 	 */
 	private void waitForAcknowledgementsOrReceivedAll(AbstractLamportMessage msg){
-		debug("Waiting..." + msg.getClass().getName() + "\r\n" + msg);
+		//debug("Waiting..." + msg.getClass().getName() + "\r\n" + msg);
 		if(!shouldHandleMessage(msg))
 			return;
 			
 		synchronized(acknowledgements){
 			// Clone our HashSet of missing acknowledgements to get intersection with connected peers
 			HashSet<InetSocketAddress> ackClone = new HashSet<InetSocketAddress>();
-			debug("(my: "+myAddress.getPort()+" - sender: "+msg.getSender().getPort()+") Ack wait (" + msg.getClass().getName() + "): - "+msg.getClock());
-			debug(msg.toString());
+			//debug("(my: "+myAddress.getPort()+" - sender: "+msg.getSender().getPort()+") Ack wait (" + msg.getClass().getName() + "): - "+msg.getClock());
+			//debug(msg.toString());
 			if(acknowledgements.contains(msg.getClock())){
 				ackClone = (HashSet<InetSocketAddress>)acknowledgements.get(msg.getClock()).clone();
 				ackClone.retainAll(hasConnectionToUs);
@@ -632,7 +632,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	 * Used to add acknowledgement messages to map.
 	 */
 	protected void addAndNotify(ConcurrentHashMap<Integer,HashSet<InetSocketAddress>> map, AcknowledgeMessage msg){
-		debug(String.format("(my: %s - sender: %s) Adding and notifying acknowledgement - %s (%s)", myAddress.getPort(), msg.getSender().getPort(), msg, msg.getClock()));
+		//debug(String.format("(my: %s - sender: %s) Adding and notifying acknowledgement - %s (%s)", myAddress.getPort(), msg.getSender().getPort(), msg, msg.getClock()));
 		int key = msg.getClock();
 		InetSocketAddress value = msg.getSender();
 		
@@ -640,16 +640,18 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			if(!map.containsKey(key)){
 				Set<Integer> keys = map.keySet();
 				for(Integer i : keys)
-					debug("Key in map: "+i);
+					//debug("Key in map: "+i);
 				
-				debug("Key doesnt exist... "+key+" - "+map.isEmpty());
+				//debug("Key doesnt exist... "+key+" - "+map.isEmpty());
 				return;
 			}
 			
 			HashSet<InetSocketAddress> ackList = map.get(key);
 			
-			if(ackList.contains(value))
+			if(ackList.contains(value)){
 				ackList.remove(value);
+				debug(myAddress.getPort() + ": " + key + " removed: " + value.getPort());
+			}
 			
 			map.put(key,ackList);
 			

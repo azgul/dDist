@@ -14,8 +14,8 @@ import week4.multicast.messages.AbstractLamportMessage;
  */
 public class TotallyOrderedMultiCastStressTest{
 	private int port = 1337;
-	private int peers = 2;
-	private int passes = 100;
+	private int peers = 3;
+	private int passes = 2;
 	private ChatQueue[] queue;
 	
 	@Before
@@ -52,11 +52,11 @@ public class TotallyOrderedMultiCastStressTest{
 				x++;
 			}
 		}
-		System.out.println(x + " messages was sent");
 		
 		try {
 			Thread.sleep(2000);
 		} catch (InterruptedException e) {}
+		System.out.println(x + " messages was sent");
 		
 		AbstractLamportMessage[] message;
 		
