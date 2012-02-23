@@ -58,8 +58,6 @@ public class TotallyOrderedMultiCastStressTest{
 		} catch (InterruptedException e) {}
 		System.out.println(x + " messages was sent");
 		
-		AbstractLamportMessage[] message;
-		
 		for (int i=0; i<(passes*peers);i++) {			
 			AbstractLamportMessage curr = null;
 			AbstractLamportMessage prev = null;
