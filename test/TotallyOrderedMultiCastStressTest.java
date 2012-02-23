@@ -1,5 +1,7 @@
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.HashSet;
+import java.util.PriorityQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import multicast.MulticastQueue;
@@ -27,9 +29,13 @@ public class TotallyOrderedMultiCastStressTest{
 		
 		try {
 			queue[0].createGroup(port, MulticastQueue.DeliveryGuarantee.TOTAL);
+			
 			for (int i=1; i<peers; i++) {
 				queue[i].joinGroup(port+1, new InetSocketAddress("localhost", port), MulticastQueue.DeliveryGuarantee.TOTAL);
 				port++;
+				try {
+					Thread.sleep(5000);
+				} catch (InterruptedException e) {}
 			}
 			
 		} catch (IOException e) {}
@@ -47,16 +53,37 @@ public class TotallyOrderedMultiCastStressTest{
 		
 		int x = 0;
 		for (int i=0; i<passes;i++) {
-			for (int j=0; j<peers; j++) {
+			for (int j=peers-1; j>=0; j--) {
 				queue[j].put(Integer.toString(x)); 
 				x++;
 			}
 		}
+		System.out.println(x + " messages was sent");
 		
 		try {
-			Thread.sleep(2000);
+			Thread.sleep(1000);
 		} catch (InterruptedException e) {}
-		System.out.println(x + " messages was sent");
+		
+		System.out.println("Stopped sleeping");
+		for (int i=0;i<peers;i++) {
+			System.out.println("queue: " + i);
+			PriorityQueue<AbstractLamportMessage> pendingGets = new PriorityQueue<AbstractLamportMessage>(queue[i].pendingGets);
+		
+			AbstractLamportMessage msg = pendingGets.poll();
+			while (msg!=null) {
+				System.out.println(msg);
+				msg = pendingGets.poll();
+			}
+			
+			
+			
+			
+			//System.out.println();
+			//for (InetSocketAddress i : )
+			//hasConnectionToUs.values();
+		}
+		
+		
 		
 		for (int i=0; i<(passes*peers);i++) {			
 			AbstractLamportMessage curr = null;
@@ -68,13 +95,28 @@ public class TotallyOrderedMultiCastStressTest{
 					curr = queue[j].get();
 				
 				if (prev!=null)
-					assertEquals(prev, curr);
+					//assertEquals(prev, curr);
 				
 				prev=curr;
 				
 				System.out.println("Peer "+(j+1)+" received: "+curr);
 			}
 		}
+		
+		
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {}
+		
+		for (int i=0;i<peers;i++) {
+			HashSet<InetSocketAddress> hasConnectionToUs = new HashSet<InetSocketAddress> (queue[i].hasConnectionToUs);
+			System.out.println("Connections: " + queue[i].hasConnectionToUs.size());
+			
+			
+			for (InetSocketAddress inet : hasConnectionToUs)
+				System.out.println(queue[i].myAddress.getPort() + " is connected to from " + inet.getPort());
+		}
+		
 		
 		for (int i=0; i<peers; i++) 
 			queue[i].leaveGroup();

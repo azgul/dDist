@@ -27,7 +27,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	/**
      * The address on which we listen for incoming messages.
      */      
-    private InetSocketAddress myAddress;
+    public InetSocketAddress myAddress;
 
     /**
      * Used to signal that the queue is leaving the peer group. 
@@ -50,7 +50,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
      * we do not close down the receiving end of the queue before all
      * sending to the queue is done. Not strictly needed, but nicer.
      */
-    private HashSet<InetSocketAddress> hasConnectionToUs;
+    public HashSet<InetSocketAddress> hasConnectionToUs;
 	
 	/**
      * The incoming message queue. All other peers send their messages
@@ -67,7 +67,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
     /**
      * Objects pending delivering locally.
      */
-    private PriorityQueue<AbstractLamportMessage> pendingGets;
+    public PriorityQueue<AbstractLamportMessage> pendingGets;
     
     /**
      * Objects pending sending.
@@ -161,7 +161,8 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		// When the known peer receives the join request it will
 		// connect to us, so let us remember that she has a connection
 		// to us.
-		hasConnectionToUs.add(knownPeer);	
+		hasConnectionToUs.add(knownPeer);
+		debug(myAddress.getPort() + " added " + knownPeer.getPort() + " to connections");
 
 		// Buffer a message that we have joined the group.
 		//addAndNotify(pendingGets, new AbstractLamportMessageJoin(myAddress));
@@ -232,6 +233,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 				backlog.add(msg);
 			}
 		}
+		
 		/* Before we terminate we notify callers who are blocked in
 		* out get() method that no more gets will be added to the
 		* buffer pendingGets. This allows them to return with a null
@@ -263,7 +265,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	private void handle(BacklogMessage msg){
 		// We have joined the group
 		backlog = msg.getBacklog();
-		printBacklog();
+		//printBacklog();
 	}
 	
 	private void handle(LeaveGroupMessage msg){
@@ -315,8 +317,10 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	private void handle(WelcomeMessage msg){
 		// When the sender sent us the wellcome message it connect to
 		// us, so let us remember that she has a connection to us.
+		
 		synchronized(hasConnectionToUs) {
 			hasConnectionToUs.add(msg.getSender());
+			debug(myAddress.getPort()+ " added " + msg.getSender().getPort() + " to connections1");
 		}
 		connectToPeerAt(msg.getSender());
 	}
@@ -338,6 +342,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 
 		synchronized(hasConnectionToUs) {
 			hasConnectionToUs.add(msg.getAddressOfJoiner());
+			debug(myAddress.getPort()+ " added " + msg.getAddressOfJoiner().getPort() + " to connections2 from " + msg.getSender().getPort());
 		}
 		addToUserList(msg.getAddressOfJoiner().getHostName());
 	}
@@ -347,6 +352,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		// us, so let us remember that she has a connection to us. 
 		synchronized(hasConnectionToUs) {
 			hasConnectionToUs.add(msg.getSender()); 
+			debug(myAddress.getPort()+ " added " + msg.getSender().getPort() + " to connections3");
 		}
 		
 		addToUserList(msg.getSender().getHostName());
@@ -418,6 +424,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 				// Acknowledgement for this message is now done, so remove the entry in the map
 				acknowledgements.remove(msg.getClock());
 				msg = pendingGets.poll();
+				debug(myAddress.getPort()+": " + msg);
 				return msg;
 			}
 		}
