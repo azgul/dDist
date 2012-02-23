@@ -21,8 +21,10 @@ public class MultiChat {
 	private final ChatQueue queue = new ChatQueue();
 	private ChatListener listener;
 	private JTextField field;
+	private boolean gui;
 	
-	public MultiChat(){
+	public MultiChat(boolean GUI){
+		this.gui = GUI;
 		try{
 			initServer();
 			start();
@@ -34,15 +36,13 @@ public class MultiChat {
 		}
 	}
 	
-	public MultiChat(String host){
+	public MultiChat(boolean GUI, String host){
+		this.gui = GUI;
 		initMultiChat(host,port,port);
 	}
 	
-	public MultiChat(String host, int serverPort){
-		initMultiChat(host,port,serverPort);
-	}
-	
-	public MultiChat(String host, int ownPort, int serverPort){
+	public MultiChat(boolean GUI, String host, int ownPort, int serverPort){
+		this.gui = GUI;
 		initMultiChat(host, ownPort, serverPort);
 	}
 	
@@ -61,77 +61,101 @@ public class MultiChat {
 	}
 	
 	private void start(){
-		JFrame frame = new JFrame("MultiChat");
-		WindowListener closing = new WindowAdapter(){
-			public void windowClosing(WindowEvent we){
-				queue.leaveGroup();
-				listener.interrupt();
-				System.exit(0);
-			}
-		};
-		frame.addWindowListener(closing);
-		
-		JTextArea chatlog = new JTextArea(30,100);
-		JScrollPane scroll = new JScrollPane(chatlog);
-		chatlog.setEditable(false);
-		
-		field = new JTextField(80);
-		field.addActionListener(new ActionListener(){
-			public void actionPerformed(ActionEvent ae){
-				String msg = field.getText();
-				field.setText("");
-				if (msg.toLowerCase().equals("exit")) {
+		if(gui){
+			JFrame frame = new JFrame("MultiChat");
+			WindowListener closing = new WindowAdapter(){
+				public void windowClosing(WindowEvent we){
 					queue.leaveGroup();
 					listener.interrupt();
 					System.exit(0);
-				} else {
-					queue.put(msg);
 				}
-			}
-		});
-		field.setToolTipText("Type message and press <Enter>");
-		
-		// This is not working properly at the moment!!
-		JList list = new JList(); //data has type Object[]
-		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		list.setLayoutOrientation(JList.HORIZONTAL_WRAP);
-		list.setVisibleRowCount(-1);
-		JScrollPane listScroll = new JScrollPane(list);
-		listScroll.setPreferredSize(new Dimension(100,200));
-		DefaultListModel model = new DefaultListModel();
-		model.addElement("Me");
-		list.setModel(model);
-		queue.setUserList(model);
-		
-		JPanel content = new JPanel(new BorderLayout());
-		
-		content.add(scroll, BorderLayout.CENTER);
-		//content.add(listScroll, BorderLayout.WEST);
-		content.add(field, BorderLayout.SOUTH);
-		
-		frame.setContentPane(content);
-		frame.pack();
-		frame.setVisible(true);
-		
-		listener = new ChatListener(queue, chatlog);
-		listener.start();
+			};
+			frame.addWindowListener(closing);
+
+			JTextArea chatlog = new JTextArea(30,100);
+			JScrollPane scroll = new JScrollPane(chatlog);
+			chatlog.setEditable(false);
+
+			field = new JTextField(80);
+			field.addActionListener(new ActionListener(){
+				public void actionPerformed(ActionEvent ae){
+					String msg = field.getText();
+					field.setText("");
+					if (msg.toLowerCase().equals("exit")) {
+						queue.leaveGroup();
+						listener.interrupt();
+						System.exit(0);
+					} else {
+						queue.put(msg);
+					}
+				}
+			});
+			field.setToolTipText("Type message and press <Enter>");
+
+			// This is not working properly at the moment!!
+			JList list = new JList(); //data has type Object[]
+			list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+			list.setLayoutOrientation(JList.HORIZONTAL_WRAP);
+			list.setVisibleRowCount(-1);
+			JScrollPane listScroll = new JScrollPane(list);
+			listScroll.setPreferredSize(new Dimension(100,200));
+			DefaultListModel model = new DefaultListModel();
+			model.addElement("Me");
+			list.setModel(model);
+			queue.setUserList(model);
+
+			JPanel content = new JPanel(new BorderLayout());
+
+			content.add(scroll, BorderLayout.CENTER);
+			//content.add(listScroll, BorderLayout.WEST);
+			content.add(field, BorderLayout.SOUTH);
+
+			frame.setContentPane(content);
+			frame.pack();
+			frame.setVisible(true);
+			
+			listener = new ChatListener(queue, chatlog);
+			listener.start();
+		}
+		else {
+			listener = new ChatListener(queue);
+			listener.start();
+			listen();
+		}
 	}
 			
 	public static void main(String[] args){
 		MultiChat mc;
-		if(args.length == 3){
-			int oPort = Integer.parseInt(args[1]);
-			int sPort = Integer.parseInt(args[2]);
-			mc = new MultiChat(args[0],oPort,sPort);
+		if(args.length == 4){
+			boolean gui = Boolean.parseBoolean(args[0]);
+			int oPort = Integer.parseInt(args[2]);
+			int sPort = Integer.parseInt(args[3]);
+			mc = new MultiChat(gui,args[1],oPort,sPort);
 		}
 		else if(args.length == 2){
-			int sPort = Integer.parseInt(args[1]);
-			mc = new MultiChat(args[0],sPort);
+			mc = new MultiChat(Boolean.parseBoolean(args[0]),args[1]);
 		}
-		else if (args.length == 1)
-			mc = new MultiChat(args[0]);
-		else
-			mc = new MultiChat();
+		else if (args.length == 1){
+			mc = new MultiChat(Boolean.parseBoolean(args[0]));
+		}
+	}
+	
+	private void listen(){
+		System.out.println("Lets get this chat rollin'!");
+		String msg;
+		Scanner in = new Scanner(System.in);
+		while (true) {
+				if ((msg = in.nextLine()) != null) {
+						if (msg.toLowerCase().equals("exit")) {
+								queue.leaveGroup();
+								listener.interrupt();
+								break;
+						} else {
+								queue.put(msg);
+						}
+				}
+		}
+		System.exit(0);
 	}
 	
 	/**
