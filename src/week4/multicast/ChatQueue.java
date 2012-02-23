@@ -104,9 +104,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	}
 	
 	private void addToUserList(String user){
-		System.err.println("Trying to add??");
 		if(userlist != null){
-			System.err.println("Adding user...");
 			userlist.addElement(user);
 		}
 	}
@@ -230,7 +228,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			
 			
 			// Save the backlog without joinRequests
-			if(!(msg instanceof JoinRequestMessage)){
+			if(!(msg instanceof JoinRequestMessage) && !(msg instanceof AcknowledgeMessage)){
 				backlog.add(msg);
 			}
 		}
