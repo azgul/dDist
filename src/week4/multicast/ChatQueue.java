@@ -623,7 +623,6 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
      */
     protected <T> void addAndNotify(Collection<T> coll, T msg) {
 		synchronized (coll) {
-			System.out.println(myAddress.getPort()+ " added: " + msg);
 			coll.add(msg);
 			//debug("Added message of type " + msg.getClass().getName());
 			// Notify that there is a new message. 
