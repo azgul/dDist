@@ -650,7 +650,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			
 			if(ackList.contains(value)){
 				ackList.remove(value);
-				debug(myAddress.getPort() + ": " + key + " removed: " + value.getPort());
+				debug(myAddress.getPort() + ": " + key + " removed: " + value.getPort() + " for message "+ msg);
 			}
 			
 			map.put(key,ackList);

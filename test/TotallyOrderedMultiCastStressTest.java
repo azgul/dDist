@@ -75,5 +75,13 @@ public class TotallyOrderedMultiCastStressTest{
 					assertEquals(message[k], message[k+1]);}
 			}
 		}
+		
+		for (int i=0; i<peers; i++) 
+			queue[i].leaveGroup();
+		
+		for (int i=0; i<peers; i++)
+			try {
+				queue[i].join();
+			} catch (InterruptedException e) {}
 	}
 }
