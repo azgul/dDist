@@ -248,9 +248,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	
 	private void addMsgToAcknowledgements(AbstractLamportMessage msg){
 		synchronized(acknowledgements){
-			System.out.println(myAddress.getPort() + " adding message: " + msg +" from " + msg.getSender().getPort());
 			if(acknowledgements.containsKey(msg.getClock())) {
-				System.out.println(myAddress.getPort() + " jk lol");
 				return;
 			}
 				
