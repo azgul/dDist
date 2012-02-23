@@ -2,12 +2,9 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import junit.framework.TestCase;
-import multicast.MulticastMessage;
 import multicast.MulticastQueue;
 import org.junit.*;
 import static org.junit.Assert.*;
-import week4.*;
 import week4.multicast.*;
 import week4.multicast.messages.AbstractLamportMessage;
 
@@ -17,8 +14,8 @@ import week4.multicast.messages.AbstractLamportMessage;
  */
 public class TotallyOrderedMultiCastStressTest{
 	private int port = 1337;
-	private int peers = 2;
-	private int passes = 1;
+	private int peers = 3;
+	private int passes = 2;
 	private ChatQueue[] queue;
 	
 	@Before
@@ -29,31 +26,42 @@ public class TotallyOrderedMultiCastStressTest{
 			queue[p] = new ChatQueue();
 		
 		try {
-			queue[0].createGroup(port, MulticastQueue.DeliveryGuarantee.FIFO);
+			queue[0].createGroup(port, MulticastQueue.DeliveryGuarantee.TOTAL);
 			for (int i=1; i<peers; i++) {
-				queue[i].joinGroup(port+1, new InetSocketAddress("localhost", port), MulticastQueue.DeliveryGuarantee.FIFO);
+				queue[i].joinGroup(port+1, new InetSocketAddress("localhost", port), MulticastQueue.DeliveryGuarantee.TOTAL);
 				port++;
 			}
 			
 		} catch (IOException e) {}
+		System.out.println("Created 1 server and connected with "+ (peers-1) + " peers");
 	}
 	
 	@Test
 	public void doesItWork() {
 		try{
-			Thread.sleep(2000);
+			Thread.sleep(1000);
 		}catch(InterruptedException e){
 			System.err.println("Interrupted...");
 			return;
 		}
-		for (int i=0; i<passes;i++) {
-			for (int j=0; j<peers; j++)
-				queue[j].put(Integer.toString(j));
-		}
 		
-		AbstractLamportMessage[] message = new AbstractLamportMessage[peers];
+		int x = 0;
+		for (int i=0; i<passes;i++) {
+			for (int j=0; j<peers; j++) {
+				queue[j].put(Integer.toString(x)); 
+				x++;
+			}
+		}
+		System.out.println(x + " messages was sent");
+		
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {}
+		
+		AbstractLamportMessage[] message;
 		
 		for (int i=0; i<(passes*peers);i++) {
+			message = new AbstractLamportMessage[peers];
 			for (int j=0; j<peers; j++) {
 				message[j] = queue[j].get();
 					while (!queue[j].shouldHandleMessage(message[j]))
@@ -61,11 +69,10 @@ public class TotallyOrderedMultiCastStressTest{
 			}
 							
 			for (int k=0; k<peers; k++) {
-				if (k+1 < message.length)
-					assertEquals(message[k].toString(), message[k+1].toString());
+				System.out.println("Peer "+(k+1)+" received: "+message[k]);
+				if (k+1 < message.length) {
+					assertEquals(message[k], message[k+1]);}
 			}
-			
-			message = new AbstractLamportMessage[peers];
 		}
 	}
 }

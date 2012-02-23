@@ -166,7 +166,7 @@ public class MultiChat {
 	 */
 	private void initClient(String host, int oPort, int sPort) throws IOException {
 		System.out.println("Joining TrollFace-group~");
-		queue.joinGroup(oPort, new InetSocketAddress(host, sPort), MulticastQueue.DeliveryGuarantee.NONE);
+		queue.joinGroup(oPort, new InetSocketAddress(host, sPort), MulticastQueue.DeliveryGuarantee.TOTAL);
 	}
 	
 	/**
@@ -181,7 +181,7 @@ public class MultiChat {
 	private void initServer() throws UnknownHostException, IOException{
 		System.out.println("Creating TrollFace-group~");
 		
-		queue.createGroup(port, MulticastQueue.DeliveryGuarantee.FIFO);
+		queue.createGroup(port, MulticastQueue.DeliveryGuarantee.TOTAL);
 		
 		queue.put(motd);
 	}

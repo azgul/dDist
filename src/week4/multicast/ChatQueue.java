@@ -76,7 +76,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	
 	private ArrayList<AbstractLamportMessage> backlog;
 	
-	private static int QUEUE_CAP = 10;
+	private static int QUEUE_CAP = 10000;
 	
 	private DefaultListModel userlist;
 	
@@ -119,7 +119,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	
 	@Override
 	public void createGroup(int port, DeliveryGuarantee deliveryGuarantee) throws IOException {
-		assert (deliveryGuarantee==DeliveryGuarantee.NONE || deliveryGuarantee==DeliveryGuarantee.FIFO) : "Can at best implement FIFO";
+		assert (deliveryGuarantee==DeliveryGuarantee.NONE || deliveryGuarantee==DeliveryGuarantee.TOTAL) : "Can at best implement TOTAL";
 		
 		// Try to listen on the given port. Exception are propagated out.
 		incoming.listenOnPort(port);
@@ -138,7 +138,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 
 	@Override
     public void joinGroup(int port, InetSocketAddress knownPeer, DeliveryGuarantee deliveryGuarantee) throws IOException {
-        assert (deliveryGuarantee==DeliveryGuarantee.NONE || deliveryGuarantee==DeliveryGuarantee.FIFO) : "Can at best implement FIFO";
+        assert (deliveryGuarantee==DeliveryGuarantee.NONE || deliveryGuarantee==DeliveryGuarantee.TOTAL) : "Can at best implement TOTAL";
 
 		// Try to listen on the given port. Exceptions are propagated
 		// out of the method.
@@ -248,8 +248,12 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	
 	private void addMsgToAcknowledgements(AbstractLamportMessage msg){
 		synchronized(acknowledgements){
-			if(acknowledgements.containsKey(msg.getClock()) || !shouldHandleMessage(msg))
+			System.out.println(myAddress.getPort() + " adding message: " + msg +" from " + msg.getSender().getPort());
+			if(acknowledgements.containsKey(msg.getClock())) {
+				System.out.println(myAddress.getPort() + " jk lol");
 				return;
+			}
+				
 			
 			// Add current peers to acknowledge map if this is not an AcknowledgeMessage
 			HashSet<InetSocketAddress> ackList = (HashSet<InetSocketAddress>) hasConnectionToUs;
@@ -415,7 +419,8 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 				debug(myAddress.getPort()+" After sick sleep");
 				// Acknowledgement for this message is now done, so remove the entry in the map
 				acknowledgements.remove(msg.getClock());
-				return pendingGets.poll();
+				msg = pendingGets.poll();
+				return msg;
 			}
 		}
 	}
@@ -548,7 +553,9 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			// Set the message clock
 			msg.setClock(clock);
 			
-			addMsgToAcknowledgements(msg);
+			if (shouldHandleMessage(msg))
+				addMsgToAcknowledgements(msg);
+			
 			
 			// Send messages
 			for (PointToPointQueueSenderEnd<AbstractLamportMessage> out : outgoing.values()){
@@ -616,6 +623,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
      */
     protected <T> void addAndNotify(Collection<T> coll, T msg) {
 		synchronized (coll) {
+			System.out.println(myAddress.getPort()+ " added: " + msg);
 			coll.add(msg);
 			//debug("Added message of type " + msg.getClass().getName());
 			// Notify that there is a new message. 
