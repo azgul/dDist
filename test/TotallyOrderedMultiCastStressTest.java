@@ -60,19 +60,21 @@ public class TotallyOrderedMultiCastStressTest{
 		
 		AbstractLamportMessage[] message;
 		
-		for (int i=0; i<(passes*peers);i++) {
-			message = null;
-			message = new AbstractLamportMessage[peers];
+		for (int i=0; i<(passes*peers);i++) {			
+			AbstractLamportMessage curr = null;
+			AbstractLamportMessage prev = null;
+			
 			for (int j=0; j<peers; j++) {
-				message[j] = queue[j].get();
-					while (!queue[j].shouldHandleMessage(message[j]))
-						message[j] = queue[j].get();
-			}
-							
-			for (int k=0; k<peers; k++) {
-				System.out.println("Peer "+(k+1)+" received: "+message[k]);
-				if (k+1 < message.length) {
-					assertEquals(message[k], message[k+1]);}
+				curr = queue[j].get();
+				while (!queue[j].shouldHandleMessage(curr))
+					curr = queue[j].get();
+				
+				if (prev!=null)
+					assertEquals(prev, curr);
+				
+				prev=curr;
+				
+				System.out.println("Peer "+(j+1)+" received: "+curr);
 			}
 		}
 		
