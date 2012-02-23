@@ -194,7 +194,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 				addMsgToAcknowledgements(msg);
 
 				// Send acknowledgement
-				AbstractLamportMessage ack = new AcknowledgeMessage(myAddress, msg.getClock());
+				AbstractLamportMessage ack = new AcknowledgeMessage(myAddress, msg);
 				sendToAllExceptMe(ack);
 				//debug("(my: "+myAddress.getPort()+" - sender: " + msg.getSender().getPort() + ") sending ack: ("+clock+") "+msg.hashCode());
 			}
@@ -248,14 +248,14 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	
 	private void addMsgToAcknowledgements(AbstractLamportMessage msg){
 		synchronized(acknowledgements){
-			if(acknowledgements.containsKey(msg.getClock())) {
+			if(acknowledgements.containsKey(msg.getClock()+msg.getSender().hashCode())) {
 				return;
 			}
 				
 			
 			// Add current peers to acknowledge map if this is not an AcknowledgeMessage
 			HashSet<InetSocketAddress> ackList = (HashSet<InetSocketAddress>) hasConnectionToUs;
-			acknowledgements.put(msg.getClock(),ackList);
+			acknowledgements.put(msg.getClock()+msg.getSender().hashCode(),ackList);
 			//debug("Added message (" + msg.getClass().getName() + ") to ack: "+msg.getClock());
 		}
 	}
