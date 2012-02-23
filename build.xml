@@ -26,6 +26,10 @@ dDist build management.
 	
     runMultiChatServer:   Starts the MultiChat server on the current host
 	runMultiChatClient:   Starts the MultiChat as a client. Specify 1 parameter as host when running!
+	runMultiChatClientP:  Starts the MultiChat as a client. Specify 3 parameters, host, ownPort and serverPort.
+	runMultiChatServerGUI:Starts the MultiChat with GUI
+	runMultiChatClientGUI:Starts the MultiChat with GUI and 1 parameter (host)
+	runMultiChatClientGUP:Starts the MultiChat with GUI and 3 parameters (host, ownPort, serverPort)
     </echo>
   </target>
 
@@ -68,6 +72,15 @@ dDist build management.
   
   <target name="runMultiChatServer" depends="buildAll">
     <java fork="yes" classname="week4.MultiChat">
+		<arg value="false" />
+      <classpath>
+		<path refid="classPath"/>
+      </classpath>
+    </java>
+  </target>
+  <target name="runMultiChatServerGUI" depends="buildAll">
+    <java fork="yes" classname="week4.MultiChat">
+		<arg value="true" />
       <classpath>
 		<path refid="classPath"/>
       </classpath>
@@ -76,6 +89,39 @@ dDist build management.
   
   <target name="runMultiChatClient" depends="buildAll">
     <java fork="yes" classname="week4.MultiChat">
+		<arg value="false" />
+		<arg value="${host}"/>
+      <classpath>
+		<path refid="classPath"/>
+      </classpath>
+    </java>
+  </target>
+  
+  <target name="runMultiChatClientGUI" depends="buildAll">
+    <java fork="yes" classname="week4.MultiChat">
+		<arg value="true" />
+		<arg value="${host}"/>
+      <classpath>
+		<path refid="classPath"/>
+      </classpath>
+    </java>
+  </target>
+  
+  <target name="runMultiChatClientP" depends="buildAll">
+    <java fork="yes" classname="week4.MultiChat">
+		<arg value="false" />
+		<arg value="${host}"/>
+		<arg value="${ownPort}"/>
+		<arg value="${serverPort}"/>
+      <classpath>
+		<path refid="classPath"/>
+      </classpath>
+    </java>
+  </target>
+  
+  <target name="runMultiChatClientGUP" depends="buildAll">
+    <java fork="yes" classname="week4.MultiChat">
+		<arg value="true" />
 		<arg value="${host}"/>
 		<arg value="${ownPort}"/>
 		<arg value="${serverPort}"/>
