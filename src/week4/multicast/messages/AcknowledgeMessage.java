@@ -11,9 +11,9 @@ import java.net.InetSocketAddress;
  * @author larss
  */
 public class AcknowledgeMessage extends AbstractLamportMessage {
-	private int msgClock;
+	private double msgClock;
 	
-	public AcknowledgeMessage(InetSocketAddress addr, int clock){
+	public AcknowledgeMessage(InetSocketAddress addr, double clock){
 		super(addr);
 		this.msgClock = clock;
 	}
@@ -22,7 +22,7 @@ public class AcknowledgeMessage extends AbstractLamportMessage {
 		return String.format("[Acknowledge of message to time %s from %s]", msgClock, getSender());
 	}
 	
-	public int getClock(){
+	public double getClock(){
 		return msgClock;
 	}
 }

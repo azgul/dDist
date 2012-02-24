@@ -18,7 +18,7 @@ import week4.multicast.messages.AbstractLamportMessage;
 public class TotallyOrderedMultiCastStressTest{
 	private int port = 1337;
 	private int peers = 3;
-	private int passes = 2;
+	private int passes = 100;
 	private ChatQueue[] queue;
 	
 	@Before
@@ -59,7 +59,7 @@ public class TotallyOrderedMultiCastStressTest{
 				x++;
 			}
 		}
-		System.out.println(x + " messages was sent");
+		System.out.println(x + " messages were sent");
 		
 		try {
 			Thread.sleep(1000);
@@ -91,7 +91,8 @@ public class TotallyOrderedMultiCastStressTest{
 				
 				
 				if (prev!=null) {
-					System.out.println("#"+j+"Comparing "+prev+" with "+curr+": "+prev.toString().equals(curr.toString()));
+					//System.out.println("#"+j+" Comparing '"+prev+"' to '"+curr+"': "+prev.toString().equals(curr.toString()));
+					System.out.println("#"+j+" Comparing '"+prev+"'("+prev.getClock()+") to '"+curr+"' ("+curr.getClock()+"): "+prev.toString().equals(curr.toString()));
 					assertEquals(curr.toString(), prev.toString());
 					
 					//System.out.println("Peer "+(j+1)+" received: "+curr);
