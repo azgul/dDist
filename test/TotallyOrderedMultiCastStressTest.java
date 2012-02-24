@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.HashSet;
 import java.util.PriorityQueue;
@@ -31,7 +32,7 @@ public class TotallyOrderedMultiCastStressTest{
 			queue[0].createGroup(port, MulticastQueue.DeliveryGuarantee.TOTAL);
 			
 			for (int i=1; i<peers; i++) {
-				queue[i].joinGroup(port+1, new InetSocketAddress("localhost", port), MulticastQueue.DeliveryGuarantee.TOTAL);
+				queue[i].joinGroup(port+1, new InetSocketAddress(InetAddress.getLocalHost(), port), MulticastQueue.DeliveryGuarantee.TOTAL);
 				port++;
 				try {
 					Thread.sleep(5000);
@@ -64,24 +65,17 @@ public class TotallyOrderedMultiCastStressTest{
 			Thread.sleep(1000);
 		} catch (InterruptedException e) {}
 		
-		System.out.println("Stopped sleeping");
+		/*System.out.println("Stopped sleeping");
 		for (int i=0;i<peers;i++) {
-			System.out.println("queue: " + i);
+			//System.out.println("queue: " + i);
 			PriorityQueue<AbstractLamportMessage> pendingGets = new PriorityQueue<AbstractLamportMessage>(queue[i].pendingGets);
 		
 			AbstractLamportMessage msg = pendingGets.poll();
 			while (msg!=null) {
-				System.out.println(msg);
+				//System.out.println(msg);
 				msg = pendingGets.poll();
 			}
-			
-			
-			
-			
-			//System.out.println();
-			//for (InetSocketAddress i : )
-			//hasConnectionToUs.values();
-		}
+		}*/
 		
 		
 		
@@ -91,15 +85,20 @@ public class TotallyOrderedMultiCastStressTest{
 			
 			for (int j=0; j<peers; j++) {
 				curr = queue[j].get();
+				
 				while (!queue[j].shouldHandleMessage(curr))
 					curr = queue[j].get();
 				
-				if (prev!=null)
-					//assertEquals(prev, curr);
+				
+				if (prev!=null) {
+					System.out.println("#"+j+"Comparing "+prev+" with "+curr+": "+prev.toString().equals(curr.toString()));
+					assertEquals(curr.toString(), prev.toString());
+					
+					//System.out.println("Peer "+(j+1)+" received: "+curr);
+				}
 				
 				prev=curr;
 				
-				System.out.println("Peer "+(j+1)+" received: "+curr);
 			}
 		}
 		
@@ -108,22 +107,22 @@ public class TotallyOrderedMultiCastStressTest{
 			Thread.sleep(1000);
 		} catch (InterruptedException e) {}
 		
-		for (int i=0;i<peers;i++) {
+		/*for (int i=0;i<peers;i++) {
 			HashSet<InetSocketAddress> hasConnectionToUs = new HashSet<InetSocketAddress> (queue[i].hasConnectionToUs);
 			System.out.println("Connections: " + queue[i].hasConnectionToUs.size());
 			
 			
 			for (InetSocketAddress inet : hasConnectionToUs)
 				System.out.println(queue[i].myAddress.getPort() + " is connected to from " + inet.getPort());
-		}
+		}*/
 		
 		
 		for (int i=0; i<peers; i++) 
 			queue[i].leaveGroup();
 		
-		for (int i=0; i<peers; i++)
-			try {
+		try {
+			for (int i=0; i<peers; i++)
 				queue[i].join();
-			} catch (InterruptedException e) {}
+		} catch (InterruptedException e) {}
 	}
 }

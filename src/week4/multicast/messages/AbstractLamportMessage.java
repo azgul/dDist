@@ -26,13 +26,13 @@ public abstract class AbstractLamportMessage extends MulticastMessage implements
 		this.clock = clock;
 	}
 	
-	public boolean equals(Object other){
+	/*public boolean equals(Object other){
 		if(!getClass().equals(other.getClass())){
 			return false;
 		}
 		
 		return clock == ((AbstractLamportMessage)other).clock;
-	}
+	}*/
 	
 	@Override
 	public int hashCode(){

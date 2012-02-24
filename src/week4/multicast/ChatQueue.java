@@ -22,7 +22,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	 */
 	private int clock;
 	
-	private boolean debug = true;
+	private boolean debug = false;
 	
 	/**
      * The address on which we listen for incoming messages.
@@ -147,10 +147,11 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
         // Record our address.
 		InetAddress localhost = InetAddress.getLocalHost();
 		String localHostAddress = localhost.getCanonicalHostName();
+		
 		myAddress = new InetSocketAddress(localHostAddress, port);
 
 		// Make an outgoing connection to the known peer.
-		PointToPointQueueSenderEnd<AbstractLamportMessage> out = connectToPeerAt(knownPeer);	
+		PointToPointQueueSenderEnd<AbstractLamportMessage> out = connectToPeerAt(knownPeer);
 
 		// Send the known peer our address. 
 		JoinRequestMessage joinRequestMessage = new JoinRequestMessage(myAddress);
@@ -424,7 +425,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 				// Acknowledgement for this message is now done, so remove the entry in the map
 				acknowledgements.remove(msg.getClock());
 				msg = pendingGets.poll();
-				debug(myAddress.getPort()+": " + msg);
+				//debug(myAddress.getPort()+": " + msg);
 				return msg;
 			}
 		}
@@ -488,6 +489,9 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		
 		// Do we have a connection already?
 		PointToPointQueueSenderEnd<AbstractLamportMessage> out = outgoing.get(address);
+		
+		if (outgoing.containsKey(address))
+			return null;
 		
 		assert (out == null) : "Cannot connect twice to same peer!";
 		
@@ -560,7 +564,6 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			
 			if (shouldHandleMessage(msg))
 				addMsgToAcknowledgements(msg);
-			
 			
 			// Send messages
 			for (PointToPointQueueSenderEnd<AbstractLamportMessage> out : outgoing.values()){
