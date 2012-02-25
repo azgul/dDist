@@ -22,7 +22,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	 */
 	private double clock;
 	
-	private boolean debug = true;
+	private boolean debug = false;
 	
 	/**
      * The address on which we listen for incoming messages.
@@ -443,6 +443,8 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 				//	acknowledgements.remove(msg.getClock());
 				//}
 				msg = pendingGets.poll();
+				
+				debug(String.format("polled: %s (%s)", msg, acknowledgements.size()));
 				//debug(myAddress.getPort()+": " + msg);
 				return msg;
 			}
