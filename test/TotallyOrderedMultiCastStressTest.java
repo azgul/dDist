@@ -20,6 +20,7 @@ public class TotallyOrderedMultiCastStressTest{
 	private int peers = 5;
 	private int passes = 100;
 	private ChatQueue[] queue;
+	long before, temp, after;
 	
 	@Before
 	public void setup() {
@@ -42,7 +43,8 @@ public class TotallyOrderedMultiCastStressTest{
 	}
 	
 	@Test
-	public void doesItWork() {		
+	public void doesItWork() {	
+		before = System.currentTimeMillis();
 		int x = 0;
 		for (int i=0; i<passes;i++) {
 			for (int j=0; j<peers; j++) {
@@ -50,9 +52,14 @@ public class TotallyOrderedMultiCastStressTest{
 				x++;
 			}
 		}
+		after = System.currentTimeMillis();
+		temp = after-before;
+		
 		System.out.println(x + " messages were sent");
 		
 		wait(peers*3);		
+		
+		before = System.currentTimeMillis();
 		
 		for (int i=0; i<(passes*peers);i++) {			
 			AbstractLamportMessage curr = null;
@@ -65,15 +72,16 @@ public class TotallyOrderedMultiCastStressTest{
 					curr = queue[j].get();
 				
 				if (prev!=null) {
-					//System.out.println("#"+j+" Comparing '"+prev+"'("+prev.getClock()+") to '"+curr+"' ("+curr.getClock()+"): "+prev.toString().equals(curr.toString()));
-					assertEquals(curr.toString(), prev.toString());
+					assertEquals("curr: "+curr.getClock()+" -- prev: "+prev.getClock(),curr.toString(), prev.toString());
 				}
 				
 				prev=curr;
 			}
 		}
+		after = System.currentTimeMillis();
+		temp += after-before;
 		
-		wait(1);
+		System.out.println(String.format("Benchmark took %s ms", temp));
 		/*
 		for (int i=0; i<peers; i++) {
 			queue[i].leaveGroup();
