@@ -17,7 +17,7 @@ import week4.multicast.messages.AbstractLamportMessage;
  */
 public class TotallyOrderedMultiCastStressTest{
 	private int port = 1337;
-	private int peers = 5;
+	private int peers = 3;
 	private int passes = 100;
 	private ChatQueue[] queue;
 	long before, temp, after;
@@ -62,7 +62,7 @@ public class TotallyOrderedMultiCastStressTest{
 		before = System.currentTimeMillis();
 		
 		for (int i=0; i<(passes*peers);i++) {			
-			AbstractLamportMessage curr = null;
+			AbstractLamportMessage curr;
 			AbstractLamportMessage prev = null;
 			
 			for (int j=0; j<peers; j++) {
