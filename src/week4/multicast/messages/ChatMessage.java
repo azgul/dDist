@@ -21,6 +21,6 @@ public class ChatMessage extends AbstractLamportMessage {
 	
 	@Override
 	public String toString(){
-		return String.format("%s: %s (%s)", getSender().getHostName(), message, this.getClock());
+		return String.format("%s: %s", getSender().getHostName(), message);
 	}
 }
