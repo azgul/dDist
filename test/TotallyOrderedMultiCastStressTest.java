@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.PriorityQueue;
 import java.util.logging.Level;
@@ -17,13 +18,16 @@ import week4.multicast.messages.AbstractLamportMessage;
  */
 public class TotallyOrderedMultiCastStressTest{
 	private int port = 1337;
-	private int peers = 21;
+	private int peers = 3;
 	private int passes = 100;
 	private ChatQueue[] queue;
 	long before, temp, after;
 	
 	@Before
-	public void setup() {
+	public void setup(){
+		setup(peers);
+	}
+	public void setup(int peers) {
 		queue = new ChatQueue[peers];
 		
 		for(int p=0; p<peers; p++)
@@ -39,11 +43,16 @@ public class TotallyOrderedMultiCastStressTest{
 			}
 			
 		} catch (IOException e) {}
-		System.out.println("Created 1 server and connected with "+ (peers-1) + " peers");
+		//System.out.println("Created 1 server and connected with "+ (peers-1) + " peers");
+		System.out.print(".");
 	}
 	
-	@Test
-	public void doesItWork() {	
+	@Test	
+	public void doesItWork(){
+		doesItWork(peers);
+	}
+	
+	public long doesItWork(int peers) {	
 		before = System.currentTimeMillis();
 		for (int i=0; i<passes;i++) {
 			queue[i % peers].put(Integer.toString(i));
@@ -55,9 +64,9 @@ public class TotallyOrderedMultiCastStressTest{
 		after = System.currentTimeMillis();
 		temp = after-before;
 		
-		System.out.println(passes + " messages were sent");
+		//System.out.println(passes + " messages were sent");
 		
-		wait(peers);		
+		wait(peers);
 		
 		before = System.currentTimeMillis();
 		
@@ -81,7 +90,7 @@ public class TotallyOrderedMultiCastStressTest{
 		after = System.currentTimeMillis();
 		temp += after-before;
 		
-		System.out.println(String.format("Benchmark took %s ms", temp));
+		//System.out.println(String.format("Benchmark took %s ms", temp));
 		
 		for (int i=0; i<peers; i++) {
 			queue[i].leaveGroup();
@@ -90,7 +99,8 @@ public class TotallyOrderedMultiCastStressTest{
 			} catch (InterruptedException e) {}
 			wait(1);
 		}
-		System.out.println("Left group.");
+		
+		return temp;
 	}
 	
 	public static void wait(int secs) {
