@@ -23,7 +23,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	 */
 	private LamportClock clock;
 	
-	private boolean debug = true;
+	private boolean debug = false;
 	
 	/**
      * The address on which we listen for incoming messages.
@@ -84,7 +84,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	/**
 	 * Acknowledgement map
 	 */
-	private ConcurrentHashMap<Integer,HashSet<InetSocketAddress>> acknowledgements;
+	private ConcurrentHashMap<Double,HashSet<InetSocketAddress>> acknowledgements;
 	
 	public ChatQueue(){
 		clock = new LamportClock();
@@ -94,7 +94,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		outgoing = new ConcurrentHashMap<InetSocketAddress,PointToPointQueueSenderEnd<AbstractLamportMessage>>();
 		hasConnectionToUs = new HashSet<InetSocketAddress>();
 		backlog = new ArrayList<AbstractLamportMessage>();
-		acknowledgements = new ConcurrentHashMap<Integer,HashSet<InetSocketAddress>>();
+		acknowledgements = new ConcurrentHashMap<Double,HashSet<InetSocketAddress>>();
 		
 		sendingThread = new SendingThread();
 		sendingThread.start();
@@ -148,10 +148,14 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
         // Record our address.
 		InetAddress localhost = InetAddress.getLocalHost();
 		String localHostAddress = localhost.getCanonicalHostName();
+		
 		myAddress = new InetSocketAddress(localHostAddress, port);
 
 		// Make an outgoing connection to the known peer.
-		PointToPointQueueSenderEnd<AbstractLamportMessage> out = connectToPeerAt(knownPeer);	
+		PointToPointQueueSenderEnd<AbstractLamportMessage> out = connectToPeerAt(knownPeer);
+		
+		if(out == null)
+			return;
 
 		// Send the known peer our address. 
 		JoinRequestMessage joinRequestMessage = new JoinRequestMessage(myAddress);
@@ -162,7 +166,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		// connect to us, so let us remember that she has a connection
 		// to us.
 		hasConnectionToUs.add(knownPeer);
-		debug(myAddress.getPort() + " added " + knownPeer.getPort() + " to connections");
+		//debug(myAddress.getPort() + " added " + knownPeer.getPort() + " to connections");
 
 		// Buffer a message that we have joined the group.
 		//addAndNotify(pendingGets, new AbstractLamportMessageJoin(myAddress));
@@ -253,10 +257,10 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			if(acknowledgements.containsKey(msg.getClock())) {
 				return;
 			}
-				
 			
 			// Add current peers to acknowledge map if this is not an AcknowledgeMessage
 			HashSet<InetSocketAddress> ackList = (HashSet<InetSocketAddress>) hasConnectionToUs;
+			debug("Added: " + msg);
 			acknowledgements.put(msg.getClock(),ackList);
 			//debug("Added message (" + msg.getClass().getName() + ") to ack: "+msg.getClock());
 		}
@@ -331,10 +335,15 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		
 		// Connect to the new peer and bid him welcome. 
 		PointToPointQueueSenderEnd<AbstractLamportMessage> out = connectToPeerAt(msg.getAddressOfJoiner());
+		
+		if(out == null)
+			return;
+		
 		WelcomeMessage wmsg = new WelcomeMessage(myAddress);
-		wmsg.setClock(clock.tick());
-		sendToAllExceptMe(wmsg);
-		//out.put(wmsg);
+		clock++;
+		wmsg.setClock(clock);
+		//sendToAllExceptMe(wmsg);
+		out.put(wmsg);
 		// When this peer receives the wellcome message it will
 		// connect to us, so let us remember that she has a connection
 		// to us.
@@ -368,6 +377,10 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		
 		// Then we connect to the new peer. 
 		PointToPointQueueSenderEnd<AbstractLamportMessage> out = connectToPeerAt(msg.getSender());
+		
+		if(out == null)
+			return;
+		
 		BacklogMessage bmsg = new BacklogMessage(myAddress, backlog);
 		bmsg.setClock(clock.tick());
 		out.put(bmsg);
@@ -416,13 +429,22 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 				// By contract we signal shutdown by returning null.
 			} else {
 				AbstractLamportMessage msg = pendingGets.peek();
+				if (shouldHandleMessage(msg)) {
+					addMsgToAcknowledgements(msg);
+					AbstractLamportMessage ack = new AcknowledgeMessage(myAddress, msg.getClock());
+					sendToAllExceptMe(ack);
+				}
 				//debug(myAddress.getPort()+" Before sick sleep");
 				waitForAcknowledgementsOrReceivedAll(msg);
 				//debug(myAddress.getPort()+" After sick sleep");
 				// Acknowledgement for this message is now done, so remove the entry in the map
-				acknowledgements.remove(msg.getClock());
+				//synchronized (acknowledgements) {
+				//	acknowledgements.remove(msg.getClock());
+				//}
 				msg = pendingGets.poll();
-				debug(myAddress.getPort()+": " + msg);
+				
+				debug(String.format("polled: %s (%s)", msg, acknowledgements.size()));
+				//debug(myAddress.getPort()+": " + msg);
 				return msg;
 			}
 		}
@@ -486,6 +508,9 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		
 		// Do we have a connection already?
 		PointToPointQueueSenderEnd<AbstractLamportMessage> out = outgoing.get(address);
+		
+		if (outgoing.containsKey(address))
+			return null;
 		
 		assert (out == null) : "Cannot connect twice to same peer!";
 		
@@ -553,25 +578,16 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			// Set the message clock
 			msg.setClock(clock.tick());
 			
-			if (shouldHandleMessage(msg))
-				addMsgToAcknowledgements(msg);
-			
-			
-			// Send messages
-			for (PointToPointQueueSenderEnd<AbstractLamportMessage> out : outgoing.values()){
-				out.put(msg);
+			if (!(msg instanceof AcknowledgeMessage)) {
+				// Increment the Lamport Clock
+				clock++;
+
+				// Set the message clock
+				msg.setClock(clock);
 			}
-		}
-    }
-    private void sendToAllExceptMe(AbstractLamportMessage msg, int clock) {
-		if (isLeaving!=true) {
-			
-			// Set the message clock
-			msg.setClock(clock);
 			
 			if (shouldHandleMessage(msg))
 				addMsgToAcknowledgements(msg);
-			
 			
 			// Send messages
 			for (PointToPointQueueSenderEnd<AbstractLamportMessage> out : outgoing.values()){
@@ -595,17 +611,21 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			//debug("(my: "+myAddress.getPort()+" - sender: "+msg.getSender().getPort()+") Ack wait (" + msg.getClass().getName() + "): - "+msg.getClock());
 			//debug(msg.toString());
 			if(acknowledgements.contains(msg.getClock())){
+				System.out.println("what");
 				ackClone = (HashSet<InetSocketAddress>)acknowledgements.get(msg.getClock()).clone();
 				ackClone.retainAll(hasConnectionToUs);
 			}
 			while(!noMoreGetsWillBeAdded && !(ackClone.isEmpty())){
 				try {
+					System.out.println("wot");
 					acknowledgements.wait();
 					// Update our clone
 					ackClone = (HashSet<InetSocketAddress>)acknowledgements.get(msg.getClock()).clone();
 					ackClone.retainAll(hasConnectionToUs);
 				}catch(InterruptedException e) {}
 			}
+			
+			acknowledgements.remove(msg.getClock());
 		}
 	}
 	
@@ -649,26 +669,22 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	/**
 	 * Used to add acknowledgement messages to map.
 	 */
-	protected void addAndNotify(ConcurrentHashMap<Integer,HashSet<InetSocketAddress>> map, AcknowledgeMessage msg){
+	protected void addAndNotify(ConcurrentHashMap<Double,HashSet<InetSocketAddress>> map, AcknowledgeMessage msg){
 		//debug(String.format("(my: %s - sender: %s) Adding and notifying acknowledgement - %s (%s)", myAddress.getPort(), msg.getSender().getPort(), msg, msg.getClock()));
-		int key = msg.getClock();
+		double key = msg.getClock();
 		InetSocketAddress value = msg.getSender();
 		
 		synchronized(map){
-			if(!map.containsKey(key)){
-				Set<Integer> keys = map.keySet();
-				for(Integer i : keys)
-					//debug("Key in map: "+i);
-				
-				//debug("Key doesnt exist... "+key+" - "+map.isEmpty());
+			if(!map.containsKey(key))
 				return;
-			}
 			
 			HashSet<InetSocketAddress> ackList = map.get(key);
+			if(ackList == null)
+				throw new NullPointerException("AckList is null, FGT! "+key);
 			
 			if(ackList.contains(value)){
 				ackList.remove(value);
-				debug(myAddress.getPort() + ": " + key + " removed: " + value.getPort() + " for message "+ msg);
+				//debug(myAddress.getPort() + ": " + key + " removed: " + value.getPort() + " for message "+ msg);
 			}
 			
 			map.put(key,ackList);

@@ -13,7 +13,7 @@ import week4.multicast.messages.AbstractLamportMessage;
  */
 public class LamportMessageComparator implements Comparator<AbstractLamportMessage> {
 
-	public int compare(AbstractLamportMessage t, AbstractLamportMessage t1) {
-		return t.getClock() - t1.getClock();
+	public int compare(AbstractLamportMessage t, AbstractLamportMessage t1) {		
+		return Double.compare(t.getClock(), t1.getClock());
 	}	
 }

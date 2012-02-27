@@ -12,27 +12,29 @@ import multicast.MulticastMessage;
  * @author larss
  */
 public abstract class AbstractLamportMessage extends MulticastMessage implements LamportMessage {
-	private int clock;
+	private double clock;
 	
 	public AbstractLamportMessage(InetSocketAddress addr){
 		super(addr);
 	}
 	
-	public int getClock(){
-		return clock;
+	public double getClock(){
+		int len = Integer.toString(getSender().hashCode()).length();
+
+		return clock+(getSender().hashCode() / Math.pow(10, len));
 	}
 	
-	public void setClock(int clock){
+	public void setClock(double clock){
 		this.clock = clock;
 	}
 	
-	public boolean equals(Object other){
+	/*public boolean equals(Object other){
 		if(!getClass().equals(other.getClass())){
 			return false;
 		}
 		
 		return clock == ((AbstractLamportMessage)other).clock;
-	}
+	}*/
 	
 	@Override
 	public int hashCode(){

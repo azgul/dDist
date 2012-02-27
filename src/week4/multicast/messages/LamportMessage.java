@@ -9,6 +9,6 @@ package week4.multicast.messages;
  * @author larss
  */
 public interface LamportMessage {
-	public int getClock();
-	public void setClock(int clock);
+	public double getClock();
+	public void setClock(double clock);
 }
