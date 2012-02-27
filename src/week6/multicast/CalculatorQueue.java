@@ -14,6 +14,7 @@ import java.util.concurrent.PriorityBlockingQueue;
 import javax.swing.DefaultListModel;
 import multicast.*;
 import replicated_calculator.ClientEvent;
+import week4.LamportClock;
 import week4.multicast.messages.*;
 import week6.multicast.messages.ClientEventMessage;
 import week6.multicast.messages.VariablesMessage;
@@ -22,7 +23,7 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 	/**
 	 * Lamport Clock
 	 */
-	private double clock;
+	private LamportClock clock;
 	
 	private boolean debug = false;
 	
@@ -88,7 +89,7 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 	private ConcurrentHashMap<Double,HashSet<InetSocketAddress>> acknowledgements;
 	
 	public CalculatorQueue(){
-		clock = 0;
+		clock = new LamportClock();
 		incoming = new PointToPointQueueReceiverEndNonRobust<AbstractLamportMessage>();
 		pendingGets = new PriorityQueue<ClientEventMessage>(QUEUE_CAP, new LamportMessageComparator());
 		pendingSends = new ConcurrentLinkedQueue<ClientEvent>();
@@ -160,8 +161,7 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 
 		// Send the known peer our address. 
 		JoinRequestMessage joinRequestMessage = new JoinRequestMessage(myAddress);
-		clock++;
-		joinRequestMessage.setClock(clock);
+		joinRequestMessage.setClock(clock.tick());
 		out.put(joinRequestMessage);
 		
 		// When the known peer receives the join request it will
@@ -192,7 +192,7 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 		*/
 		while ((msg = incoming.get()) != null) {
 			// Update the lamport clock
-			clock = Math.max(Math.floor(msg.getClock()), clock)+1;
+			clock.tick(msg);
 			
 			//debug("(my: "+myAddress.getPort()+" - sender: "+msg.getSender().getPort()+") Got message of type " + msg.getClass().getName() + ":  ("+msg.getClock()+")");
 			
@@ -341,8 +341,7 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 			return;
 		
 		WelcomeMessage wmsg = new WelcomeMessage(myAddress);
-		clock++;
-		wmsg.setClock(clock);
+		wmsg.setClock(clock.tick());
 		//sendToAllExceptMe(wmsg);
 		out.put(wmsg);
 		// When this peer receives the wellcome message it will
@@ -367,7 +366,7 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 		addToUserList(msg.getSender().getHostName());
 		
 		JoinRelayMessage jrmsg = new JoinRelayMessage(myAddress, msg.getSender());
-		jrmsg.setClock(clock+1);
+		jrmsg.setClock(clock.tick());
 		
 		// Buffer a join message so it can be gotten. 
 		// No need to display join message
@@ -384,8 +383,7 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 			return;
 		
 		VariablesMessage bmsg = new VariablesMessage(myAddress, backlog);
-		clock++;
-		bmsg.setClock(clock);
+		bmsg.setClock(clock.tick());
 		out.put(bmsg);
 	}
 	
@@ -567,7 +565,7 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
     private void sendToAll(AbstractLamportMessage msg) {
 		if (isLeaving!=true) {
 			// Set the message clock to the current clock + 1 since the clock will be incremented in sendToAllExceptMe.
-			msg.setClock(clock+1);
+			msg.setClock(clock.tick());
 			/* Send to self. */
 			incoming.put(msg);
 			/* Then send to the others. */
@@ -578,11 +576,8 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 		if (isLeaving!=true) {
 			
 			if (!(msg instanceof AcknowledgeMessage)) {
-				// Increment the Lamport Clock
-				clock++;
-
 				// Set the message clock
-				msg.setClock(clock);
+				msg.setClock(clock.tick());
 			}
 			
 			if (shouldHandleMessage(msg))
