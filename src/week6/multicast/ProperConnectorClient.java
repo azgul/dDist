@@ -40,6 +40,7 @@ public class ProperConnectorClient extends ClientNonRobust{
 			this.fromServer.listenOnPort(clientPortForServer);
 			toServer.put(new ClientEventConnect(clientName,eventID++,new InetSocketAddress(myAddress,clientPortForServer)));
 		} catch (IOException e) {
+			System.err.println("FAIL! " + e.getMessage());
 			return false;
 		}
 		

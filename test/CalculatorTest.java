@@ -33,11 +33,13 @@ public class CalculatorTest {
 			client[i] = new ProperConnectorClient();
 		
 		int p = port;
-		server[0].createGroup(port);	
+		server[0].createGroup(port,p+1);	
+		p++;
 		
 		try {
 			for (int i=1; i<servers; i++) {
 				p++;
+				System.out.println("Joining with server " + i + " server port " + p + " and client port " + (p+1));
 				server[i].joinGroup(p, new InetSocketAddress(InetAddress.getLocalHost(), port), p+1);
 				p++;
 				wait(1);
@@ -47,7 +49,7 @@ public class CalculatorTest {
 			int c = 0;
 			for (int i=0; i<servers; i++) {
 				for (int j=0; j<clients; j++) {
-					System.out.println("Connecting with: " + c);
+					System.out.println("Connecting with: " + c + " on server " + i + " server port " + (p+1) + " with client port " + (p+100));
 					client[c].connect(new InetSocketAddress(InetAddress.getLocalHost(), p+1), p+100, Integer.toString(c));
 					c++;
 				}
