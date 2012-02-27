@@ -340,8 +340,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			return;
 		
 		WelcomeMessage wmsg = new WelcomeMessage(myAddress);
-		clock++;
-		wmsg.setClock(clock);
+		wmsg.setClock(clock.tick());
 		//sendToAllExceptMe(wmsg);
 		out.put(wmsg);
 		// When this peer receives the wellcome message it will
@@ -575,16 +574,25 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
     }
     private void sendToAllExceptMe(AbstractLamportMessage msg) {
 		if (isLeaving!=true) {			
-			// Set the message clock
-			msg.setClock(clock.tick());
+			if (!(msg instanceof AcknowledgeMessage))
+				msg.setClock(clock.tick());
 			
-			if (!(msg instanceof AcknowledgeMessage)) {
-				// Increment the Lamport Clock
-				clock++;
-
-				// Set the message clock
-				msg.setClock(clock);
+			
+			if (shouldHandleMessage(msg))
+				addMsgToAcknowledgements(msg);
+			
+			// Send messages
+			for (PointToPointQueueSenderEnd<AbstractLamportMessage> out : outgoing.values()){
+				out.put(msg);
 			}
+		}
+    }
+	
+    private void sendToAllExceptMe(AbstractLamportMessage msg, int c) {
+		if (isLeaving!=true) {			
+			if (!(msg instanceof AcknowledgeMessage))
+				msg.setClock(c);
+			
 			
 			if (shouldHandleMessage(msg))
 				addMsgToAcknowledgements(msg);
