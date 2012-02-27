@@ -20,7 +20,7 @@ public abstract class AbstractLamportMessage extends MulticastMessage implements
 	
 	public double getClock(){
 		int len = Integer.toString(getSender().hashCode()).length();
-
+		
 		return clock+(getSender().hashCode() / Math.pow(10, len));
 	}
 	
