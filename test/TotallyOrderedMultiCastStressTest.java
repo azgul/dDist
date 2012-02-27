@@ -17,7 +17,7 @@ import week4.multicast.messages.AbstractLamportMessage;
  */
 public class TotallyOrderedMultiCastStressTest{
 	private int port = 1337;
-	private int peers = 9;
+	private int peers = 21;
 	private int passes = 100;
 	private ChatQueue[] queue;
 	long before, temp, after;
@@ -45,7 +45,6 @@ public class TotallyOrderedMultiCastStressTest{
 	@Test
 	public void doesItWork() {	
 		before = System.currentTimeMillis();
-		int x = 0;
 		for (int i=0; i<passes;i++) {
 			queue[i % peers].put(Integer.toString(i));
 			/*for (int j=0; j<peers; j++) {
@@ -58,7 +57,7 @@ public class TotallyOrderedMultiCastStressTest{
 		
 		System.out.println(passes + " messages were sent");
 		
-		wait(5);		
+		wait(peers);		
 		
 		before = System.currentTimeMillis();
 		
@@ -91,6 +90,7 @@ public class TotallyOrderedMultiCastStressTest{
 			} catch (InterruptedException e) {}
 			wait(1);
 		}
+		System.out.println("Left group.");
 	}
 	
 	public static void wait(int secs) {
