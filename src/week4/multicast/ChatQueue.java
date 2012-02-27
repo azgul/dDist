@@ -28,7 +28,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	/**
      * The address on which we listen for incoming messages.
      */      
-    public InetSocketAddress myAddress;
+    private InetSocketAddress myAddress;
 
     /**
      * Used to signal that the queue is leaving the peer group. 
@@ -51,7 +51,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
      * we do not close down the receiving end of the queue before all
      * sending to the queue is done. Not strictly needed, but nicer.
      */
-    public HashSet<InetSocketAddress> hasConnectionToUs;
+    private HashSet<InetSocketAddress> hasConnectionToUs;
 	
 	/**
      * The incoming message queue. All other peers send their messages
@@ -68,7 +68,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
     /**
      * Objects pending delivering locally.
      */
-    public PriorityQueue<AbstractLamportMessage> pendingGets;
+    private PriorityQueue<AbstractLamportMessage> pendingGets;
     
     /**
      * Objects pending sending.
@@ -572,6 +572,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 			sendToAllExceptMe(msg, c);
 		}
     }
+	
     private void sendToAllExceptMe(AbstractLamportMessage msg) {
 		if (isLeaving!=true) {			
 			if (!(msg instanceof AcknowledgeMessage))

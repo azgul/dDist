@@ -54,7 +54,6 @@ public class TotallyOrderedMultiCastStressTest{
 	
 	public long doesItWork(int peers) {	
 		before = System.currentTimeMillis();
-		int x = 0;
 		for (int i=0; i<passes;i++) {
 			queue[i % peers].put(Integer.toString(i));
 			/*for (int j=0; j<peers; j++) {
