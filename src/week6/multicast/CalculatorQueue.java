@@ -246,7 +246,7 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 	}
 	
 	public boolean shouldHandleMessage(AbstractLamportMessage msg){
-		return (msg instanceof ChatMessage); //!(msg instanceof LeaveGroupMessage) && !(msg instanceof JoinRelayMessage) && !(msg instanceof AcknowledgeMessage) && !(msg instanceof JoinRequestMessage) && !(msg instanceof BacklogMessage) && !(msg instanceof WelcomeMessage);
+		return (msg instanceof ClientEventMessage); //!(msg instanceof LeaveGroupMessage) && !(msg instanceof JoinRelayMessage) && !(msg instanceof AcknowledgeMessage) && !(msg instanceof JoinRequestMessage) && !(msg instanceof BacklogMessage) && !(msg instanceof WelcomeMessage);
 	}
 	
 	private void addMsgToAcknowledgements(AbstractLamportMessage msg){
