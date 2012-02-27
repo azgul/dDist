@@ -19,10 +19,6 @@ import replicated_calculator.Parameters;
  * @author larss
  */
 public class ProperConnectorClient extends ClientNonRobust{
-	private String clientName;
-	private PointToPointQueueSenderEndNonRobust<ClientEvent> toServer;
-	private PointToPointQueueReceiverEndNonRobust<ClientEvent> fromServer;
-	private int eventID = 0;
 	
 	/**
      * Connects to the server and sends a connect event to the server.
@@ -40,7 +36,6 @@ public class ProperConnectorClient extends ClientNonRobust{
 			this.fromServer.listenOnPort(clientPortForServer);
 			toServer.put(new ClientEventConnect(clientName,eventID++,new InetSocketAddress(myAddress,clientPortForServer)));
 		} catch (IOException e) {
-			System.err.println("FAIL! " + e.getMessage());
 			return false;
 		}
 		

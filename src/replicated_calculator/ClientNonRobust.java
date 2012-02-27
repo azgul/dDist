@@ -33,25 +33,25 @@ public class ClientNonRobust extends Thread implements Client  {
     /*
      * The name of this client. 
      */
-    private String clientName;
+    protected String clientName;
     
     /*
      * Point-to-point message for sending messages to the server.
      * Used for sending ClientEvents to the server.
      */
-    private PointToPointQueueSenderEndNonRobust<ClientEvent> toServer;
+    protected PointToPointQueueSenderEndNonRobust<ClientEvent> toServer;
     
     /*
      * Point-to-point message queue for receiving messages from the server.
      * Used for getting back client events sent on toServer. When an
      * event comes back it means that the server has handled the event.
      */
-    private PointToPointQueueReceiverEndNonRobust<ClientEvent> fromServer;
+    protected PointToPointQueueReceiverEndNonRobust<ClientEvent> fromServer;
     
     /*
      * The event identifier of the next event to be sent to the server.
      */
-    private long eventID = 0;
+    protected long eventID = 0;
     
     /*
      * Used for storing the callbacks which are used to report back the values 
@@ -69,7 +69,7 @@ public class ClientNonRobust extends Thread implements Client  {
      * Send an addition command to the server.
      */
     synchronized public void add(String left, String right, String res) {
-	toServer.put(new ClientEventAdd(clientName,eventID++,left,right,res));
+		toServer.put(new ClientEventAdd(clientName,eventID++,left,right,res));
     }
     
     /**

@@ -24,7 +24,7 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 
 	protected CalculatorQueue queue;
     
-    public void createGroup(int clientPort, int serverPort) {
+    public void createGroup(int serverPort, int clientPort) {
 		operationsFromClients = null;
 		try {
 			operationsFromClients = new PointToPointQueueReceiverEndNonRobust<ClientEvent>();
@@ -81,11 +81,13 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
     public void run() {
 		ClientEvent nextOperation = null;
 		ClientEventMessage msg = null;
-		while ((msg = queue.get())!=null || (nextOperation = operationsFromClients.get())!=null) {
-			if(msg != null)
+		while ((nextOperation = operationsFromClients.get())!=null) {
+			if(msg != null){
 				msg.getClientEvent().accept(this);
-			if(nextOperation != null)
+			}
+			if(nextOperation != null){
 				nextOperation.accept(this);
+			}
 		}
     }
     

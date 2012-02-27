@@ -4,12 +4,16 @@
  * @author Martin
  */
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Random;
 import multicast.MulticastQueue;
 import org.junit.*;
 import static org.junit.Assert.*;
+import replicated_calculator.Callback;
 import replicated_calculator.ClientNonRobust;
+import replicated_calculator.ClientTUI;
 import week6.ServerReplicated;
 import week6.multicast.CalculatorQueue;
 import week6.multicast.ProperConnectorClient;
@@ -20,6 +24,7 @@ public class CalculatorTest {
 	private int port = 1337;
 	private ServerReplicated server[];
 	private ProperConnectorClient client[];
+	private int passesPerClient = 4;
 	
 	@Before
 	public void setup() {
@@ -49,8 +54,11 @@ public class CalculatorTest {
 			int c = 0;
 			for (int i=0; i<servers; i++) {
 				for (int j=0; j<clients; j++) {
-					System.out.println("Connecting with: " + c + " on server " + i + " server port " + (p+1) + " with client port " + (p+100));
-					client[c].connect(new InetSocketAddress(InetAddress.getLocalHost(), p+1), p+100, Integer.toString(c));
+					System.out.println("Connecting with: " + c + " on server " + i + " server port " + (p+1) + " with client port " + (p+100+c));
+					if(client[c].connect(new InetSocketAddress(InetAddress.getLocalHost(), p+1), p+100+c, Integer.toString(c)))
+						System.out.println("Connected.");
+					else
+						System.out.println("Connection failed.");
 					c++;
 				}
 				p++;
@@ -59,9 +67,68 @@ public class CalculatorTest {
 		} catch (IOException e) {}
 	}
 	
+	synchronized public static void report(String str) {
+	System.out.println(str);
+    }
+	
 	@Test
 	public void doesItWork() {
+		Random r = new Random();
+		String[] vars = {"a","b","c","b","e","f"};
+		int c, var1, var2, var3, type;
+		BigInteger value;
 		
+		for(int i = 0; i < client.length*passesPerClient; i++){
+			var1 = r.nextInt(vars.length);
+			var2 = r.nextInt(vars.length);
+			var3 = r.nextInt(vars.length);
+			type = r.nextInt(2);
+			c = r.nextInt(client.length);
+			System.out.println("Type: " + type);
+			switch(type){
+				// Add
+				case 1:
+					System.out.println("Adding: " + vars[var3] + " = " + vars[var1] + " + " + vars[var2]);
+					client[c].add(vars[var1], vars[var2], vars[var3]);
+					
+					break;
+					
+				
+				// Assign
+				default:
+					value = new BigInteger(8, r);
+					System.out.println("Assigning: " + vars[var1] + " = " + value);
+					client[c].assign(vars[var1], value);
+					break;
+			}
+		}
+		
+		final BigInteger current, next;
+		current = BigInteger.ZERO;
+		next = BigInteger.ZERO;
+		for(String s : vars){
+			final String v = s;
+			for(int i = 0; i < client.length; i++){
+				if(i < client.length-1){
+					// Reset variables by subtracting themselves
+					current.subtract(current);
+					next.subtract(next);
+					final String cl = "Client" + i + ": " + s + " = ";
+					client[i].read(s, new Callback<BigInteger>(){
+						public void result(BigInteger bi){
+							report(cl + bi);
+							current.add(bi);
+						}
+					});
+					client[i+1].read(s, new Callback<BigInteger>(){
+						public void result(BigInteger bi){
+							next.add(bi);
+						}
+					});
+					assertEquals(current,next);
+				}
+			}
+		}
 	}
 	
 	public static void wait(int secs) {
