@@ -29,7 +29,7 @@ public class LamportClock {
 	
 	public void tick(AbstractLamportMessage msg) {
 		synchronized(this) {		
-		clock = Math.max(msg.getClock(), clock)+1;
+		clock = (int) (Math.max(msg.getClock(), clock)+1);
 		}
 	}
 	
