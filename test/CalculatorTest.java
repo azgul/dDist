@@ -46,7 +46,8 @@ public class CalculatorTest {
 			p = port;
 			int c = 0;
 			for (int i=0; i<servers; i++) {
-				for (int j=0; i<clients; j++) {
+				for (int j=0; j<clients; j++) {
+					System.out.println("Connecting with: " + c);
 					client[c].connect(new InetSocketAddress(InetAddress.getLocalHost(), p), p+100, Integer.toString(c));
 					c++;
 				}
