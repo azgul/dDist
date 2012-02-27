@@ -565,11 +565,12 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
     private void sendToAll(AbstractLamportMessage msg) {
 		if (isLeaving!=true) {
 			// Set the message clock to the current clock + 1 since the clock will be incremented in sendToAllExceptMe.
-			msg.setClock(clock.tick());
+			int c = clock.tick();
+			msg.setClock(c);
 			/* Send to self. */
 			incoming.put(msg);
 			/* Then send to the others. */
-			sendToAllExceptMe(msg);
+			sendToAllExceptMe(msg, c);
 		}
     }
     private void sendToAllExceptMe(AbstractLamportMessage msg) {
@@ -578,6 +579,23 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 			if (!(msg instanceof AcknowledgeMessage)) {
 				// Set the message clock
 				msg.setClock(clock.tick());
+			}
+			
+			if (shouldHandleMessage(msg))
+				addMsgToAcknowledgements(msg);
+			
+			// Send messages
+			for (PointToPointQueueSenderEnd<AbstractLamportMessage> out : outgoing.values()){
+				out.put(msg);
+			}
+		}
+    }
+    private void sendToAllExceptMe(AbstractLamportMessage msg, int c) {
+		if (isLeaving!=true) {
+			
+			if (!(msg instanceof AcknowledgeMessage)) {
+				// Set the message clock
+				msg.setClock(c);
 			}
 			
 			if (shouldHandleMessage(msg))
