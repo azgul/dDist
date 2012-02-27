@@ -14,13 +14,14 @@ import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.ListModel;
 import multicast.*;
+import week4.LamportClock;
 import week4.multicast.messages.*;
 
 public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	/**
 	 * Lamport Clock
 	 */
-	private int clock;
+	private LamportClock clock;
 	
 	private boolean debug = true;
 	
@@ -86,7 +87,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 	private ConcurrentHashMap<Integer,HashSet<InetSocketAddress>> acknowledgements;
 	
 	public ChatQueue(){
-		clock = 0;
+		clock = new LamportClock();
 		incoming = new PointToPointQueueReceiverEndNonRobust<AbstractLamportMessage>();
 		pendingGets = new PriorityQueue<AbstractLamportMessage>(QUEUE_CAP, new LamportMessageComparator());
 		pendingSends = new ConcurrentLinkedQueue<String>();
@@ -154,8 +155,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 
 		// Send the known peer our address. 
 		JoinRequestMessage joinRequestMessage = new JoinRequestMessage(myAddress);
-		clock++;
-		joinRequestMessage.setClock(clock);
+		joinRequestMessage.setClock(clock.tick());
 		out.put(joinRequestMessage);
 		
 		// When the known peer receives the join request it will
@@ -186,7 +186,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		*/
 		while ((msg = incoming.get()) != null) {
 			// Update the lamport clock
-			clock = Math.max(msg.getClock(), clock)+1;
+			clock.tick(msg);
 			
 			//debug("(my: "+myAddress.getPort()+" - sender: "+msg.getSender().getPort()+") Got message of type " + msg.getClass().getName() + ":  ("+msg.getClock()+")");
 			
@@ -332,8 +332,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		// Connect to the new peer and bid him welcome. 
 		PointToPointQueueSenderEnd<AbstractLamportMessage> out = connectToPeerAt(msg.getAddressOfJoiner());
 		WelcomeMessage wmsg = new WelcomeMessage(myAddress);
-		clock++;
-		wmsg.setClock(clock);
+		wmsg.setClock(clock.tick());
 		sendToAllExceptMe(wmsg);
 		//out.put(wmsg);
 		// When this peer receives the wellcome message it will
@@ -358,7 +357,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		addToUserList(msg.getSender().getHostName());
 		
 		JoinRelayMessage jrmsg = new JoinRelayMessage(myAddress, msg.getSender());
-		jrmsg.setClock(clock+1);
+		jrmsg.setClock(clock.tick());
 		
 		// Buffer a join message so it can be gotten. 
 		addAndNotify(pendingGets, msg);
@@ -370,8 +369,7 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
 		// Then we connect to the new peer. 
 		PointToPointQueueSenderEnd<AbstractLamportMessage> out = connectToPeerAt(msg.getSender());
 		BacklogMessage bmsg = new BacklogMessage(myAddress, backlog);
-		clock++;
-		bmsg.setClock(clock);
+		bmsg.setClock(clock.tick());
 		out.put(bmsg);
 	}
 	
@@ -541,19 +539,32 @@ public class ChatQueue extends Thread implements MulticastQueue<Serializable>{
      */
     private void sendToAll(AbstractLamportMessage msg) {
 		if (isLeaving!=true) {
+			int c = clock.tick();
 			// Set the message clock to the current clock + 1 since the clock will be incremented in sendToAllExceptMe.
-			msg.setClock(clock+1);
+			msg.setClock(c);
 			/* Send to self. */
 			incoming.put(msg);
 			/* Then send to the others. */
-			sendToAllExceptMe(msg);
+			sendToAllExceptMe(msg, c);
 		}
     }
     private void sendToAllExceptMe(AbstractLamportMessage msg) {
-		if (isLeaving!=true) {
+		if (isLeaving!=true) {			
+			// Set the message clock
+			msg.setClock(clock.tick());
 			
-			// Increment the Lamport Clock
-			clock++;
+			if (shouldHandleMessage(msg))
+				addMsgToAcknowledgements(msg);
+			
+			
+			// Send messages
+			for (PointToPointQueueSenderEnd<AbstractLamportMessage> out : outgoing.values()){
+				out.put(msg);
+			}
+		}
+    }
+    private void sendToAllExceptMe(AbstractLamportMessage msg, int clock) {
+		if (isLeaving!=true) {
 			
 			// Set the message clock
 			msg.setClock(clock);
