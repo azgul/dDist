@@ -157,7 +157,7 @@ public class ServerStandalone extends Thread implements ClientEventVisitor, Serv
 	}
     }
     
-    private PointToPointQueueReceiverEndNonRobust<ClientEvent> operationsFromClients;
+    protected PointToPointQueueReceiverEndNonRobust<ClientEvent> operationsFromClients;
     
     /** 
      * Keeps getting the next operation from a server and then visits the operation.

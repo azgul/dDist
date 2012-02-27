@@ -11,7 +11,7 @@ import java.net.InetSocketAddress;
  *
  */
 
-interface Server  {
+public interface Server  {
 
 	/**
 	 * Used by the first group member.
