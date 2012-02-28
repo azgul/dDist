@@ -106,28 +106,18 @@ public class CalculatorTest {
 		final BigInteger current, next;
 		current = BigInteger.ZERO;
 		next = BigInteger.ZERO;
-		for(String s : vars){
-			final String v = s;
-			for(int i = 0; i < client.length; i++){
-				if(i < client.length-1){
-					// Reset variables by subtracting themselves
-					current.subtract(current);
-					next.subtract(next);
-					final String cl = "Client" + i + ": " + s + " = ";
-					client[i].read(s, new Callback<BigInteger>(){
-						public void result(BigInteger bi){
-							report(cl + bi);
-							current.add(bi);
-						}
-					});
-					client[i+1].read(s, new Callback<BigInteger>(){
-						public void result(BigInteger bi){
-							next.add(bi);
-						}
-					});
-					assertEquals(current,next);
-				}
+		
+		for(int i = 0; i < client.length; i++){
+			for(String s : vars){
+				final String v = s;
+				final String cl = "Client" + i + ": " + s + " = ";
+				client[i].read(s, new Callback<BigInteger>(){
+					public void result(BigInteger bi){
+						report(cl + bi);
+					}
+				});
 			}
+			wait(2);
 		}
 	}
 	

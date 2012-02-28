@@ -80,13 +80,11 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 	@Override
     public void run() {
 		ClientEvent nextOperation = null;
-		ClientEventMessage msg = null;
+		ServerListener listener = new ServerListener(queue,this);
+		listener.start();
 		while ((nextOperation = operationsFromClients.get())!=null) {
-			if(msg != null){
-				msg.getClientEvent().accept(this);
-			}
 			if(nextOperation != null){
-				nextOperation.accept(this);
+				queue.put(nextOperation);
 			}
 		}
     }
