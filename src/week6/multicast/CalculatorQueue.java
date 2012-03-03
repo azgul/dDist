@@ -622,14 +622,12 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 			HashSet<InetSocketAddress> ackClone = new HashSet<InetSocketAddress>();
 			//debug("(my: "+myAddress.getPort()+" - sender: "+msg.getSender().getPort()+") Ack wait (" + msg.getClass().getName() + "): - "+msg.getClock());
 			//debug(msg.toString());
-			if(acknowledgements.contains(msg.getClock())){
-				System.out.println("what");
+			if(acknowledgements.containsKey(msg.getClock())){
 				ackClone = (HashSet<InetSocketAddress>)acknowledgements.get(msg.getClock()).clone();
 				ackClone.retainAll(hasConnectionToUs);
 			}
 			while(!noMoreGetsWillBeAdded && !(ackClone.isEmpty())){
 				try {
-					System.out.println("wot");
 					acknowledgements.wait();
 					// Update our clone
 					ackClone = (HashSet<InetSocketAddress>)acknowledgements.get(msg.getClock()).clone();
