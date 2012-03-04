@@ -50,9 +50,10 @@ public class ServerTUI {
 	    }
 	    
 	    if (s.equals("")) {
-		server.createGroup(Parameters.serverPortForServers, Parameters.serverPortForClients);
+			server.createGroup(Parameters.serverPortForServers, Parameters.serverPortForClients);
 	    } else {
-		server.joinGroup(new InetSocketAddress(serverAddress,Parameters.serverPortForServers));
+		//server.joinGroup(new InetSocketAddress(serverAddress,Parameters.serverPortForServers));
+			server.joinGroup(Parameters.serverPortForServers, new InetSocketAddress(serverAddress, Parameters.serverPortForServers), Parameters.serverPortForClients);
 	    }
 	    
 	    while ((s = stdin.readLine()) != null) { 
