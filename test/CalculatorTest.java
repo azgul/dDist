@@ -103,23 +103,36 @@ public class CalculatorTest {
 			}
 		}
 		
-		final BigInteger current, next;
-		current = BigInteger.ZERO;
-		next = BigInteger.ZERO;
+		wait(1);
 		
-		for(int i = 0; i < client.length; i++){
-			for(String s : vars){
+		for(String s : vars){
+			curr = null;
+			prev = null;
+			for(int i = 0; i < client.length; i++){
 				final String v = s;
 				final String cl = "Client" + i + ": " + s + " = ";
 				client[i].read(s, new Callback<BigInteger>(){
 					public void result(BigInteger bi){
-						report(cl + bi);
+						set(bi);
 					}
 				});
+				wait(1);
+				System.out.println(cl + curr);
+				
+				if (prev!=null)
+					assertEquals(curr, prev);
+				
+				prev=curr;
 			}
-			wait(2);
+			wait(1);
 		}
 	}
+	
+	public void set(BigInteger bi) {
+		curr = bi;
+	}
+	
+	private BigInteger curr, prev;
 	
 	public static void wait(int secs) {
 		try {
