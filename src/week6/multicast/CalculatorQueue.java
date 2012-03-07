@@ -439,9 +439,13 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 				
 				ClientEventMessage msg = pendingGets.peek();
 				
-				if(msg.isBacklog || msg.isLocalMessage){
+				if(msg.isBacklog || !msg.isLocalMessage){
 					msg = pendingGets.poll();
-					debug("Polling message from backlog (or perhaps it's a remote message; who knows?): "+msg);
+					debug("Polling message from backlog: "+msg);
+					return msg;
+				}else if(!msg.isLocalMessage){
+					msg = pendingGets.poll();
+					debug("Polling message from remote server: "+msg);
 					return msg;
 				}
 				
