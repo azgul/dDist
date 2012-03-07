@@ -33,11 +33,8 @@ public class ServerListener extends Thread {
 		ClientEventMessage msg;
 		
 		try{
-			System.out.println("Before while...");
 			while(run){
-				System.out.println("Starting loop...");
 				if((msg = queue.get()) != null){
-					System.out.println("Getting event...");
 						ClientEvent ce = msg.getClientEvent();
 						System.out.println("Got message: "+ce);
 						if(msg.getClientEvent() instanceof ClientEventConnect 
@@ -51,12 +48,9 @@ public class ServerListener extends Thread {
 							ce = new ClientEventRemoteDisconnect(dis.clientName,dis.eventID);
 						}
 						
-						System.out.println("Received event of type " + ce.getClass().getName());
 						ce.accept(visitor);
 				}
-				System.out.println("Before sleep");
 				Thread.sleep(timeout);
-				System.out.println("Ending loop...");
 			}
 		}catch(InterruptedException e){
 			// Stop
