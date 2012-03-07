@@ -94,6 +94,7 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 		for (String client : clients.keySet()) {
 			clients.remove(client).shutdown();
 		}
+		listener.run = false;
 		listener.interrupt();
     }
     
