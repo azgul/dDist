@@ -9,7 +9,7 @@ package replicated_calculator;
 
 public class ClientEventDisconnect extends ClientEvent {
 	
-	ClientEventDisconnect(String clientName, long eventID) {
+	public ClientEventDisconnect(String clientName, long eventID) {
 		super(clientName,eventID);
 	}
 	
