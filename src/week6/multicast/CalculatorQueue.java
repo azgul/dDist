@@ -271,6 +271,7 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 		debug("Got variables-message. Time to handle it~\n"+msg);
 		// We have joined the group
 		for(ClientEventMessage m : msg.getBacklog()){
+			m.isBacklog = true;
 			addAndNotify(pendingGets,m);
 		}
 		//printBacklog();
@@ -427,7 +428,7 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 	public ClientEventMessage get() {
 		// Now an object is ready in pendingObjects, unless we are
 		// shutting down. 
-		synchronized (pendingGets) {
+		synchronized (pendingGets) {		
 			//debug(myAddress.getPort()+" Before normal sleep");
 			waitForPendingGetsOrReceivedAll();
 			//debug(myAddress.getPort()+" After normal sleep");
@@ -435,7 +436,19 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 				return null;
 				// By contract we signal shutdown by returning null.
 			} else {
+				
 				ClientEventMessage msg = pendingGets.peek();
+				
+				if(msg.isBacklog || !msg.isLocalMessage){
+					msg = pendingGets.poll();
+					debug("Polling message from backlog: "+msg);
+					return msg;
+				}else if(!msg.isLocalMessage){
+					msg = pendingGets.poll();
+					debug("Polling message from remote server: "+msg);
+					return msg;
+				}
+				
 				if (shouldHandleMessage(msg)) {
 					addMsgToAcknowledgements(msg);
 					AbstractLamportMessage ack = new AcknowledgeMessage(myAddress, msg.getClock());
