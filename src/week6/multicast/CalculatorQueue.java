@@ -30,7 +30,7 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 	/**
      * The address on which we listen for incoming messages.
      */      
-    public InetSocketAddress myAddress;
+    private InetSocketAddress myAddress;
 
     /**
      * Used to signal that the queue is leaving the peer group. 
@@ -53,7 +53,7 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
      * we do not close down the receiving end of the queue before all
      * sending to the queue is done. Not strictly needed, but nicer.
      */
-    public HashSet<InetSocketAddress> hasConnectionToUs;
+    private HashSet<InetSocketAddress> hasConnectionToUs;
 	
 	/**
      * The incoming message queue. All other peers send their messages
@@ -70,7 +70,7 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
     /**
      * Objects pending delivering locally.
      */
-    public PriorityQueue<ClientEventMessage> pendingGets;
+    private PriorityQueue<ClientEventMessage> pendingGets;
     
     /**
      * Objects pending sending.
