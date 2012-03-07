@@ -439,7 +439,7 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 				
 				ClientEventMessage msg = pendingGets.peek();
 				
-				if(msg.isBacklog || !msg.isLocalMessage){
+				if(msg.isBacklog || msg.isLocalMessage){
 					msg = pendingGets.poll();
 					debug("Polling message from backlog (or perhaps it's a remote message; who knows?): "+msg);
 					return msg;
