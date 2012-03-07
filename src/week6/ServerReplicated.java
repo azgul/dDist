@@ -23,6 +23,7 @@ import week6.multicast.messages.ClientEventMessage;
 public class ServerReplicated extends ServerStandalone implements ClientEventVisitor, Server {
 
 	protected CalculatorQueue queue;
+	protected ServerListener listener;
     
     public void createGroup(int serverPort, int clientPort) {
 		operationsFromClients = null;
@@ -71,6 +72,7 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 		for (String client : clients.keySet()) {
 			clients.remove(client).shutdown();
 		}
+		listener.interrupt();
     }
     
     /** 
@@ -80,7 +82,7 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 	@Override
     public void run() {
 		ClientEvent nextOperation = null;
-		ServerListener listener = new ServerListener(queue,this);
+		listener = new ServerListener(queue,this);
 		listener.start();
 		while ((nextOperation = operationsFromClients.get())!=null) {
 			if(nextOperation != null){
