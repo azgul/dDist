@@ -593,6 +593,7 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 			
 			// Send messages
 			for (PointToPointQueueSenderEnd<AbstractLamportMessage> out : outgoing.values()){
+				debug("Sending to "+out.getReceiverAddress());
 				out.put(msg);
 			}
 		}
