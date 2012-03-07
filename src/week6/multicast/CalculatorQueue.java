@@ -268,6 +268,7 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 	}
 	
 	private void handle(VariablesMessage msg){
+		debug("Got variables-message. Time to handle it~\n"+msg);
 		// We have joined the group
 		for(ClientEventMessage m : msg.getBacklog()){
 			addAndNotify(pendingGets,m);
