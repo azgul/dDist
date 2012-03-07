@@ -12,7 +12,6 @@ import replicated_calculator.ClientEvent;
 import replicated_calculator.ClientEventConnect;
 import replicated_calculator.ClientEventDisconnect;
 import replicated_calculator.ClientEventVisitor;
-import week6.multicast.CalculatorQueue;
 import week6.multicast.messages.ClientEventMessage;
 
 /**
