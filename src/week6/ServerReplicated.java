@@ -26,6 +26,16 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 	protected CalculatorQueue queue;
 	protected ServerListener listener;
 	protected HashSet<String> allClients = new HashSet<String>();
+
+	@Override
+	protected void acknowledgeEvent(ClientEvent event) {
+		synchronized(clients){
+			if(clients.containsKey(event.clientName))
+				super.acknowledgeEvent(event);
+		}
+	}
+	
+	
     
     public void createGroup(int serverPort, int clientPort) {
 		operationsFromClients = null;
