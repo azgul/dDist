@@ -48,6 +48,8 @@ public class ServerListener extends Thread {
 							ce = new ClientEventRemoteDisconnect(dis.clientName,dis.eventID);
 						}
 						
+						msg.isLocalMessage = (queue.getAddress().equals(msg.getSender()));
+						
 						ce.accept(visitor);
 				}
 				Thread.sleep(timeout);

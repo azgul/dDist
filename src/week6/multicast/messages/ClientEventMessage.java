@@ -14,6 +14,7 @@ import week4.multicast.messages.AbstractLamportMessage;
  */
 public class ClientEventMessage extends AbstractLamportMessage {
 	private double clock;
+	public boolean isLocalMessage = false;
 	private ClientEvent event;
 	
 	public ClientEventMessage(InetSocketAddress addr, ClientEvent e){
