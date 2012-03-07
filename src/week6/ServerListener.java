@@ -35,6 +35,8 @@ public class ServerListener extends Thread {
 		try{
 			while(run){
 				if((msg = queue.get()) != null){
+						msg.isLocalMessage = (queue.getAddress().equals(msg.getSender()));
+						System.out.println(String.format("Queue: %s, Message: %s, result: %s", queue.getAddress(), msg.getSender(), msg.isLocalMessage));
 						ClientEvent ce = msg.getClientEvent();
 						System.out.println("Got message: "+ce);
 						if(msg.getClientEvent() instanceof ClientEventConnect 
@@ -48,7 +50,6 @@ public class ServerListener extends Thread {
 							ce = new ClientEventRemoteDisconnect(dis.clientName,dis.eventID);
 						}
 						
-						msg.isLocalMessage = (queue.getAddress().equals(msg.getSender()));
 						
 						ce.accept(visitor);
 				}
