@@ -441,7 +441,7 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 				
 				if(msg.isBacklog){
 					msg = pendingGets.poll();
-					debug("Polling message from backlog: "+bmsg);
+					debug("Polling message from backlog: "+msg);
 					return msg;
 				}
 				
