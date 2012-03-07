@@ -21,6 +21,7 @@ public class ServerListener extends Thread {
 	CalculatorQueue queue;
 	ServerReplicated visitor;
 	long timeout = 1;
+	public boolean run = true;
 	
 	public ServerListener(CalculatorQueue queue, ServerReplicated v){
 		this.queue = queue;
@@ -32,8 +33,11 @@ public class ServerListener extends Thread {
 		ClientEventMessage msg;
 		
 		try{
-			while(true){
+			System.out.println("Before while...");
+			while(run){
+				System.out.println("Starting loop...");
 				if((msg = queue.get()) != null){
+					System.out.println("Getting event...");
 						ClientEvent ce = msg.getClientEvent();
 						if(msg.getClientEvent() instanceof ClientEventConnect 
 								& !msg.getSender().getAddress().equals(queue.getAddress()))
@@ -46,10 +50,12 @@ public class ServerListener extends Thread {
 							ce = new ClientEventRemoteDisconnect(dis.clientName,dis.eventID);
 						}
 						
+						System.out.println("Received event of type " + ce.getClass().getName());
 						ce.accept(visitor);
 				}
-				
+				System.out.println("Before sleep");
 				Thread.sleep(timeout);
+				System.out.println("Ending loop...");
 			}
 		}catch(InterruptedException e){
 			// Stop
