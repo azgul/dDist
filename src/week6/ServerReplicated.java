@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.net.InetSocketAddress;
+import java.util.HashSet;
 import multicast.MulticastQueue;
 import multicast.MulticastQueue.DeliveryGuarantee;
 import replicated_calculator.*;
@@ -24,6 +25,7 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 
 	protected CalculatorQueue queue;
 	protected ServerListener listener;
+	protected HashSet<String> allClients = new HashSet<String>();
     
     public void createGroup(int serverPort, int clientPort) {
 		operationsFromClients = null;
@@ -61,6 +63,26 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 		}		
 		this.start();
     }
+	
+	public void visit(ClientEventRemoteConnect event){
+		synchronized(allClients){
+			allClients.add(event.clientName);
+		}
+	}
+	
+	public void visit(ClientEventRemoteDisconnect event){
+		synchronized(allClients){
+			allClients.remove(event.clientName);
+		}
+	}
+	
+	public void visit(ClientEventConnect event){
+		synchronized(allClients){
+			if(!allClients.contains(event.clientName)){
+				super.visit(event);
+			}
+		}
+	}
     
     /**
      * No group to leave, so simply shutsdown.
