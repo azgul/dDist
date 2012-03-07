@@ -11,7 +11,6 @@ import multicastqueue.MulticastQueue.DeliveryGuarantee;
 import multicastqueue.MulticastQueueTotalOnly;
 import multicastqueue.Timestamp;
 import replicated_calculator.*;
-import week6.multicast.CalculatorQueue;
 import week4.multicast.messages.AbstractLamportMessage;
 import week6.multicast.messages.ClientEventMessage;
 
