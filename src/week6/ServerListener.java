@@ -35,6 +35,7 @@ public class ServerListener extends Thread {
 			while(true){
 				if((msg = queue.get()) != null){
 						ClientEvent ce = msg.getClientEvent();
+						System.out.println("Got message: "+ce);
 						if(msg.getClientEvent() instanceof ClientEventConnect 
 								& !msg.getSender().getAddress().equals(queue.getAddress()))
 						{
