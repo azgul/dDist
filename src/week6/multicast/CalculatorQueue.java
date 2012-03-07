@@ -25,7 +25,7 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 	 */
 	private LamportClock clock;
 	
-	private boolean debug = false;
+	private boolean debug = true;
 	
 	/**
      * The address on which we listen for incoming messages.
@@ -268,6 +268,7 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 	}
 	
 	private void handle(VariablesMessage msg){
+		debug("Got variables-message. Time to handle it~\n"+msg);
 		// We have joined the group
 		for(ClientEventMessage m : msg.getBacklog()){
 			addAndNotify(pendingGets,m);
@@ -383,8 +384,10 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 		// Then we connect to the new peer. 
 		PointToPointQueueSenderEnd<AbstractLamportMessage> out = connectToPeerAt(msg.getSender());
 		
-		if(out == null)
+		if(out == null){
+			debug("Could not connect to peer that requested access");
 			return;
+		}
 		
 		VariablesMessage bmsg = new VariablesMessage(myAddress, backlog);
 		bmsg.setClock(clock.tick());
@@ -590,6 +593,7 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 			
 			// Send messages
 			for (PointToPointQueueSenderEnd<AbstractLamportMessage> out : outgoing.values()){
+				debug("Sending to "+out.getReceiverAddress());
 				out.put(msg);
 			}
 		}
