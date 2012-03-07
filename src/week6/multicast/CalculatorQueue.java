@@ -428,13 +428,7 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 	public ClientEventMessage get() {
 		// Now an object is ready in pendingObjects, unless we are
 		// shutting down. 
-		synchronized (pendingGets) {
-			if(pendingGets.peek().isBacklog){
-				ClientEventMessage bmsg = pendingGets.poll();
-				debug("Polling message from backlog: "+bmsg);
-				return bmsg;
-			}
-			
+		synchronized (pendingGets) {		
 			//debug(myAddress.getPort()+" Before normal sleep");
 			waitForPendingGetsOrReceivedAll();
 			//debug(myAddress.getPort()+" After normal sleep");
@@ -442,7 +436,15 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 				return null;
 				// By contract we signal shutdown by returning null.
 			} else {
+				
 				ClientEventMessage msg = pendingGets.peek();
+				
+				if(msg.isBacklog){
+					msg = pendingGets.poll();
+					debug("Polling message from backlog: "+bmsg);
+					return msg;
+				}
+				
 				if (shouldHandleMessage(msg)) {
 					addMsgToAcknowledgements(msg);
 					AbstractLamportMessage ack = new AcknowledgeMessage(myAddress, msg.getClock());
