@@ -5,8 +5,11 @@ import java.math.BigInteger;
 import java.util.HashMap;
 import java.net.InetSocketAddress;
 import java.util.HashSet;
+import multicastqueue.MulticastMessage;
 import multicast.MulticastQueue;
-import multicast.MulticastQueue.DeliveryGuarantee;
+import multicastqueue.MulticastQueue.DeliveryGuarantee;
+import multicastqueue.MulticastQueueTotalOnly;
+import multicastqueue.Timestamp;
 import replicated_calculator.*;
 import week6.multicast.CalculatorQueue;
 import week4.multicast.messages.AbstractLamportMessage;
@@ -23,7 +26,7 @@ import week6.multicast.messages.ClientEventMessage;
 
 public class ServerReplicated extends ServerStandalone implements ClientEventVisitor, Server {
 
-	protected CalculatorQueue queue;
+	protected MulticastQueueTotalOnly<ClientEvent> queue;
 	protected ServerListener listener;
 	protected HashSet<String> allClients = new HashSet<String>();
 
@@ -42,7 +45,7 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 		try {
 			operationsFromClients = new PointToPointQueueReceiverEndNonRobust<ClientEvent>();
 			operationsFromClients.listenOnPort(clientPort);
-			queue = new CalculatorQueue();
+			queue = new MulticastQueueTotalOnly<ClientEvent>();
 			queue.createGroup(serverPort, DeliveryGuarantee.TOTAL);
 		} catch (IOException e) {
 			System.err.println("Cannot start server!");
@@ -60,7 +63,7 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 		try {
 			operationsFromClients = new PointToPointQueueReceiverEndNonRobust<ClientEvent>();
 			operationsFromClients.listenOnPort(clientPort);
-			queue = new CalculatorQueue();
+			queue = new MulticastQueueTotalOnly<ClientEvent>();
 			queue.joinGroup(serverPort, knownPeer, DeliveryGuarantee.TOTAL);
 			
 		} catch (IOException e) {

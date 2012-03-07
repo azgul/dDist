@@ -5,6 +5,8 @@
 package week6.multicast.messages;
 
 import java.net.InetSocketAddress;
+import multicastqueue.MulticastMessage;
+import multicastqueue.Timestamp;
 import replicated_calculator.ClientEvent;
 import week4.multicast.messages.AbstractLamportMessage;
 
@@ -12,23 +14,12 @@ import week4.multicast.messages.AbstractLamportMessage;
  *
  * @author Randi K. Hillerøe <silwing@gmail.com>
  */
-public class ClientEventMessage extends AbstractLamportMessage {
-	private double clock;
+public class ClientEventMessage extends MulticastMessage {
 	private ClientEvent event;
 	
-	public ClientEventMessage(InetSocketAddress addr, ClientEvent e){
-		super(addr);
+	public ClientEventMessage(InetSocketAddress addr, Timestamp t, ClientEvent e){
+		super(addr, t);
 		event = e;
-	}
-	
-	public double getClock(){
-		int len = Integer.toString(getSender().hashCode()).length();
-
-		return clock+(getSender().hashCode() / Math.pow(10, len));
-	}
-	
-	public void setClock(double clock){
-		this.clock = clock;
 	}
 	
 	public ClientEvent getClientEvent(){
@@ -49,7 +40,7 @@ public class ClientEventMessage extends AbstractLamportMessage {
 		
 		hash *= 17 * getSender().hashCode();
 		hash *= 13 * toString().hashCode();
-		hash *= 23 * clock;
+		hash *= 23;
 		
 		return hash;
 	}

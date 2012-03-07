@@ -136,7 +136,7 @@ public class CalculatorTest {
 	
 	public static void wait(int secs) {
 		try {
-			Thread.currentThread().sleep(secs*1000);
+			Thread.currentThread().sleep(secs*200);
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(-1);
