@@ -102,6 +102,10 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 		sendingThread.start();
 	}
 	
+	public InetSocketAddress getAddress(){
+		return myAddress;
+	}
+	
 	public void setUserList(DefaultListModel list){
 		userlist = list;
 	}
