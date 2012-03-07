@@ -19,10 +19,10 @@ import week6.multicast.messages.ClientEventMessage;
  */
 public class ServerListener extends Thread {
 	CalculatorQueue queue;
-	ClientEventVisitor visitor;
+	ServerReplicated visitor;
 	long timeout = 1;
 	
-	public ServerListener(CalculatorQueue queue, ClientEventVisitor v){
+	public ServerListener(CalculatorQueue queue, ServerReplicated v){
 		this.queue = queue;
 		visitor = v;
 	}
