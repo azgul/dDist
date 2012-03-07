@@ -13,6 +13,7 @@ import multicast.MulticastMessage;
  */
 public abstract class AbstractLamportMessage extends MulticastMessage implements LamportMessage {
 	private double clock;
+	public boolean isBacklog = false;
 	
 	public AbstractLamportMessage(InetSocketAddress addr){
 		super(addr);

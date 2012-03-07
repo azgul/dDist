@@ -271,6 +271,7 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 		debug("Got variables-message. Time to handle it~\n"+msg);
 		// We have joined the group
 		for(ClientEventMessage m : msg.getBacklog()){
+			m.isBacklog = true;
 			addAndNotify(pendingGets,m);
 		}
 		//printBacklog();
@@ -428,6 +429,12 @@ public class CalculatorQueue extends Thread implements MulticastQueue<ClientEven
 		// Now an object is ready in pendingObjects, unless we are
 		// shutting down. 
 		synchronized (pendingGets) {
+			if(pendingGets.peek().isBacklog){
+				ClientEventMessage bmsg = pendingGets.poll();
+				debug("Polling message from backlog: "+bmsg);
+				return bmsg;
+			}
+			
 			//debug(myAddress.getPort()+" Before normal sleep");
 			waitForPendingGetsOrReceivedAll();
 			//debug(myAddress.getPort()+" After normal sleep");
