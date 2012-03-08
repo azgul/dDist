@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.net.InetSocketAddress;
+import week6.ClientEventConnectDenied;
 
 /**
  * 
@@ -169,5 +170,9 @@ public class ServerStandalone extends Thread implements ClientEventVisitor, Serv
 			nextOperation.accept(this);
 		}
     }
+
+	public void visit(ClientEventConnectDenied event){
+		System.out.println("Visitor of a denied connect of user "+event.clientName+".");
+	}
     
 }

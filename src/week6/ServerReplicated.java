@@ -102,11 +102,7 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 				allClients.add(event.clientName);
 			}
 		}
-	}
-	
-	public void visit(ClientEventConnectDenied event){
-		System.out.println("Visitor of a denied connect of user "+event.clientName+".");
-	}
+	}	
     
     /**
      * No group to leave, so simply shutsdown.
