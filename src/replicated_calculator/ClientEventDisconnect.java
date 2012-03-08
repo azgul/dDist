@@ -1,5 +1,7 @@
 package replicated_calculator;
 
+import multicastqueue.Timestamp;
+
 /**
  * An event describing a client disconnecting from a server.
  * 
@@ -9,8 +11,8 @@ package replicated_calculator;
 
 public class ClientEventDisconnect extends ClientEvent {
 	
-	public ClientEventDisconnect(String clientName, long eventID) {
-		super(clientName,eventID);
+	public ClientEventDisconnect(String clientName, long eventID, Timestamp t) {
+		super(clientName,eventID,t);
 	}
 	
 	public void accept(ClientEventVisitor visitor) {

@@ -5,6 +5,9 @@ import java.net.InetSocketAddress;
 import java.net.InetAddress;
 import java.io.*;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import multicastqueue.Timestamp;
 
 /**
  * A simple, non-robust client for connecting to DistributedCalculator. 
@@ -64,33 +67,60 @@ public class ClientNonRobust extends Thread implements Client  {
      * to true, the SimpleClient will close down immediately.
      */
     private boolean shutdown = false;
+	
+	protected Timestamp timestamp;
+	protected String tsExt = ".ts";
+	
+	protected void initTimestamp(){
+		File f = new File(clientName + tsExt);
+		try {
+			BufferedReader r = new BufferedReader(new FileReader(f));
+			long time = Long.parseLong(r.readLine());
+			timestamp = new Timestamp(time, clientName);
+		} catch (IOException ex) {
+			timestamp = new Timestamp(0, clientName);
+		}
+	}
+	
+	protected void saveTimestamp(){
+		File f = new File(clientName + tsExt);
+		try {
+			if(!f.exists())
+				f.createNewFile();
+			
+			BufferedWriter w = new BufferedWriter(new FileWriter(f));
+			w.write(String.valueOf(timestamp.getTime()));
+		}catch(IOException ex){
+			System.out.println("Failed to save timestamp.");
+		}
+	}
     
     /**
      * Send an addition command to the server.
      */
     synchronized public void add(String left, String right, String res) {
-		toServer.put(new ClientEventAdd(clientName,eventID++,left,right,res));
+		toServer.put(new ClientEventAdd(clientName,eventID++,left,right,res,timestamp));
     }
     
     /**
      * Send an assignment event to the server.
      */	
     synchronized public void assign(String var, BigInteger val) {
-	toServer.put(new ClientEventAssign(clientName,eventID++,var,val));
+		toServer.put(new ClientEventAssign(clientName,eventID++,var,val,timestamp));
     }
     
     /**
      * Send a beginAtomic event to the server.
      */	
     synchronized public void beginAtomic() {
-	toServer.put(new ClientEventBeginAtomic(clientName,eventID++));
+	toServer.put(new ClientEventBeginAtomic(clientName,eventID++,timestamp));
     }
     
     /**
      * Sends a compare event to the server.
      */
     synchronized public void compare(String left, String right, String res) {
-	toServer.put(new ClientEventCompare(clientName,eventID++,left,right,res));
+	toServer.put(new ClientEventCompare(clientName,eventID++,left,right,res,timestamp));
     }
     
     /**
@@ -100,13 +130,14 @@ public class ClientNonRobust extends Thread implements Client  {
      */
     synchronized public boolean connect(String addressOfServer, String clientName) {
 	this.clientName = clientName;
+	initTimestamp();
 	this.toServer = new PointToPointQueueSenderEndNonRobust<ClientEvent>();
 	this.toServer.setReceiver(new InetSocketAddress(addressOfServer,Parameters.serverPortForClients));		
 	try {
 	    final String myAddress = InetAddress.getLocalHost().getCanonicalHostName();
 	    this.fromServer = new PointToPointQueueReceiverEndNonRobust<ClientEvent>();
 	    this.fromServer.listenOnPort(Parameters.clientPortForServer);
-	    toServer.put(new ClientEventConnect(clientName,eventID++,new InetSocketAddress(myAddress,Parameters.clientPortForServer)));
+	    toServer.put(new ClientEventConnect(clientName,eventID++,new InetSocketAddress(myAddress,Parameters.clientPortForServer),timestamp));
 	} catch (IOException e) {
 	    return false;
 	}
@@ -119,7 +150,7 @@ public class ClientNonRobust extends Thread implements Client  {
      * Should only be called when all events have been sent and acknowledged.
      */
     synchronized public void disconnect() {
-	toServer.put(new ClientEventDisconnect(clientName,eventID++));
+	toServer.put(new ClientEventDisconnect(clientName,eventID++,timestamp));
 	toServer.shutdown();
 	fromServer.shutdown();
 	shutdown = true;
@@ -129,14 +160,14 @@ public class ClientNonRobust extends Thread implements Client  {
      * Sends an endAtomic event to the server.
      */
     synchronized public void endAtomic() {
-	toServer.put(new ClientEventEndAtomic(clientName,eventID++));
+	toServer.put(new ClientEventEndAtomic(clientName,eventID++,timestamp));
     }
     
     /**
      * Sends a multiplication event to the server.
      */
     synchronized public void mult(String left, String right, String res) {
-	toServer.put(new ClientEventMult(clientName,eventID++,left,right,res));
+	toServer.put(new ClientEventMult(clientName,eventID++,left,right,res,timestamp));
     }
     
     /**
@@ -145,7 +176,7 @@ public class ClientNonRobust extends Thread implements Client  {
      */
     synchronized public void read(String var, Callback<BigInteger> callback) {
 	final long eid = eventID++;
-	toServer.put(new ClientEventRead(clientName,eid,var));
+	toServer.put(new ClientEventRead(clientName,eid,var,timestamp));
 	synchronized (callbacks) {
 	    callbacks.put(new Long(eid), callback);
 	}
@@ -159,6 +190,7 @@ public class ClientNonRobust extends Thread implements Client  {
     public void run() {
 	while (!shutdown) {
 	    final ClientEvent nextACK = fromServer.get();
+		timestamp.compareTimeStamp(nextACK.timestamp);
 	    if (nextACK instanceof ClientEventRead) {
 		ClientEventRead eventRead = (ClientEventRead)nextACK;
 		Callback<BigInteger> callback;

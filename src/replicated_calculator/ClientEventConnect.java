@@ -1,5 +1,6 @@
 package replicated_calculator;
 import java.net.InetSocketAddress;
+import multicastqueue.Timestamp;
 
 /**
  * An event describing a client connecting to a server.
@@ -18,8 +19,8 @@ public class ClientEventConnect extends ClientEvent {
 	 * @param eventID The identifier of the event, @see ClientEvent#eventID
 	 * @param clientAddress The address on which the client open the receiver end of its queue
 	 */
-	public ClientEventConnect(String clientName, long eventID, InetSocketAddress clientAddress) {
-		super(clientName,eventID);
+	public ClientEventConnect(String clientName, long eventID, InetSocketAddress clientAddress, Timestamp t) {
+		super(clientName,eventID,t);
 		this.clientAddress = clientAddress;
 	}
 

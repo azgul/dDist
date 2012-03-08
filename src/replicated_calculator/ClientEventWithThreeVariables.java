@@ -1,5 +1,7 @@
 package replicated_calculator;
 
+import multicastqueue.Timestamp;
+
 /**
  * An event describing an event which operates on two variables, left and right, and 
  * then stores the result in the variable res.
@@ -20,8 +22,8 @@ public abstract class ClientEventWithThreeVariables extends ClientEvent {
 	 * @param right The name of the right operand
 	 * @param res The name of the result variable 
 	 */
-	ClientEventWithThreeVariables(String clientName, long eventID, String left, String right, String res) {
-		super(clientName,eventID);
+	ClientEventWithThreeVariables(String clientName, long eventID, String left, String right, String res, Timestamp t) {
+		super(clientName,eventID,t);
 		this.left = left;
 		this.right = right;
 		this.res = res;

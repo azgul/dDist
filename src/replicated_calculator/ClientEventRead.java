@@ -1,5 +1,6 @@
 package replicated_calculator;
 import java.math.BigInteger;
+import multicastqueue.Timestamp;
 
 /**
  * An event describing the event of reading a variable.
@@ -17,8 +18,8 @@ public class ClientEventRead extends ClientEvent {
 	 * 
 	 * @param var The name of the variable to read. 
 	 */
-	public ClientEventRead(String clientName, long eventID, String var) {
-		super(clientName,eventID);
+	public ClientEventRead(String clientName, long eventID, String var, Timestamp t) {
+		super(clientName,eventID,t);
 		this.var = var;
 		this.val = null;
 	}

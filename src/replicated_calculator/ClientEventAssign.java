@@ -1,5 +1,6 @@
 package replicated_calculator;
 import java.math.*;
+import multicastqueue.Timestamp;
 
 /**
  * An event describing the assignment of a variable.
@@ -18,8 +19,8 @@ public class ClientEventAssign extends ClientEvent {
 	 * @param var The variable to be assigned
 	 * @param val The value to assign to the variable
 	 */
-	ClientEventAssign(String clientName, long eventID, String var, BigInteger val) {
-		super(clientName,eventID);
+	ClientEventAssign(String clientName, long eventID, String var, BigInteger val, Timestamp t) {
+		super(clientName,eventID,t);
 		this.var = var;
 		this.val = val;
 	}
