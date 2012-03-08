@@ -28,27 +28,27 @@ public class CalculatorFuckedTest {
 		s1 = new ServerReplicated();
 		s1.createGroup(serverPort, clientPort);
 		
-		c = new ProperConnectorClient();
-		try{
-			c.connect(new InetSocketAddress(InetAddress.getLocalHost(), clientPort), clientPort+1, "IWILLFUCKYOUUP");
-		}catch(UnknownHostException e){
-			System.err.println("Fucked host, y0");
-			return;
-		}
-		
 		wait(1);
-		
+		/*
 		c.assign("x", BigInteger.ONE);
 		c.assign("y", BigInteger.TEN);
 		c.add("x", "y", "z");
 		
-		wait(1);
+		wait(1);*/
 		
 		s2 = new ServerReplicated();
 		try{
 			s2.joinGroup(serverPort+123, new InetSocketAddress(InetAddress.getLocalHost(), serverPort), clientPort+100);
 		}catch(UnknownHostException e){
 			System.err.println("Fucked host, y1");
+			return;
+		}
+		
+		c = new ProperConnectorClient();
+		try{
+			c.connect(new InetSocketAddress(InetAddress.getLocalHost(), clientPort+100), clientPort+1, "IWILLFUCKYOUUP");
+		}catch(UnknownHostException e){
+			System.err.println("Fucked host, y0");
 			return;
 		}
 		
