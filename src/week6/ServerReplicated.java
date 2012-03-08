@@ -31,6 +31,12 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 
 	@Override
 	protected void acknowledgeEvent(ClientEvent event) {
+		System.out.println("Acknowledging event: "+event+"\nAll clients: "+allClients);
+		if(event instanceof ClientEventConnect && allClients.contains(event.clientName)){
+			super.acknowledgeEvent(new ClientEventConnectDenied(event.clientName, event.eventID));
+			return;
+		}
+		
 		synchronized(clients){
 			if(clients.containsKey(event.clientName))
 				super.acknowledgeEvent(event);
@@ -92,9 +98,11 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 		synchronized(allClients){
 			if(!allClients.contains(event.clientName)){
 				super.visit(event);
+			}else{
+				allClients.add(event.clientName);
 			}
 		}
-	}
+	}	
     
     /**
      * No group to leave, so simply shutsdown.

@@ -1,5 +1,7 @@
 package replicated_calculator;
 
+import week6.ClientEventConnectDenied;
+
 /**
  * An interface used for visiting client events.
  * When ClientEvent.accept is called with a visitor, it will
@@ -16,6 +18,7 @@ public interface ClientEventVisitor {
 	public void visit(ClientEventBeginAtomic event);
 	public void visit(ClientEventCompare event);
 	public void visit(ClientEventConnect event);
+	public void visit(ClientEventConnectDenied event);
 	public void visit(ClientEventDisconnect event);
 	public void visit(ClientEventEndAtomic event);
 	public void visit(ClientEventMult event);
