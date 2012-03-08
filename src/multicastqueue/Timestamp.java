@@ -41,6 +41,16 @@ public class Timestamp implements Comparable<Timestamp>, Serializable
 		time = Math.max(time, other.getTime()) + 1;
 		return new Timestamp(time, id);
 	}
+	
+	/**
+	 * Compare two timstamps and return the highest.
+	 * @param other
+	 * @return 
+	 */
+	public synchronized Timestamp compareTimeStamp(Timestamp other){
+		time = Math.max(time, other.getTime());
+		return new Timestamp(time, id);
+	}
 
 	public int compareTo(Timestamp o)
 	{
