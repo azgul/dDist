@@ -4,6 +4,7 @@
  */
 package week6;
 
+import multicastqueue.Timestamp;
 import replicated_calculator.ClientEventDisconnect;
 
 /**
@@ -12,8 +13,8 @@ import replicated_calculator.ClientEventDisconnect;
  */
 public class ClientEventRemoteDisconnect extends ClientEventDisconnect {
 	
-	public ClientEventRemoteDisconnect(String clientName, long eventID) {
-		super(clientName,eventID);
+	public ClientEventRemoteDisconnect(String clientName, long eventID, Timestamp t) {
+		super(clientName,eventID,t);
 	}
 	
 }

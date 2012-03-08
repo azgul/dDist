@@ -5,6 +5,7 @@
 package week6;
 
 import java.net.InetSocketAddress;
+import multicastqueue.Timestamp;
 import replicated_calculator.ClientEventConnect;
 
 /**
@@ -13,7 +14,7 @@ import replicated_calculator.ClientEventConnect;
  */
 public class ClientEventRemoteConnect extends ClientEventConnect {
 	
-	public ClientEventRemoteConnect(String clientName, long eventID, InetSocketAddress clientAddress){
-		super(clientName, eventID, clientAddress);
+	public ClientEventRemoteConnect(String clientName, long eventID, InetSocketAddress clientAddress, Timestamp t){
+		super(clientName, eventID, clientAddress, t);
 	}
 }
