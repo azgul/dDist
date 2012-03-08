@@ -37,6 +37,8 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 			return;
 		}
 		
+		allClients.add(event.clientName);
+				
 		synchronized(clients){
 			if(clients.containsKey(event.clientName))
 				super.acknowledgeEvent(event);
@@ -97,7 +99,6 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 	public void visit(ClientEventConnect event){
 		synchronized(allClients){
 			if(!allClients.contains(event.clientName)){
-				allClients.add(event.clientName);
 				super.visit(event);
 			}
 		}
