@@ -123,6 +123,13 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 		//	}
 		//}
 	}	
+	
+	public void visit(ClientEventDisconnect event){
+		synchronized(allClients){
+			allClients.remove(event.clientName);
+		}
+		super.visit(event);
+	}
     
     /**
      * No group to leave, so simply shutsdown.

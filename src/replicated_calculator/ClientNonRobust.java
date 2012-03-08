@@ -189,7 +189,8 @@ public class ClientNonRobust extends Thread implements Client  {
     public void run() {
 		while (!shutdown) {
 			final ClientEvent nextACK = fromServer.get();
-			timestamp.compareTimeStamp(nextACK.timestamp);
+			if(nextACK != null)
+				timestamp.compareTimeStamp(nextACK.timestamp);
 			if (nextACK instanceof ClientEventRead) {
 				ClientEventRead eventRead = (ClientEventRead)nextACK;
 				Callback<BigInteger> callback;
