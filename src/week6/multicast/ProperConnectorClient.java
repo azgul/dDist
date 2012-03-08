@@ -27,6 +27,7 @@ public class ProperConnectorClient extends ClientNonRobust{
      */
     synchronized public boolean connect(InetSocketAddress addressOfServer, int clientPortForServer, String clientName) {
 		this.clientName = clientName;
+		initTimestamp();
 		this.toServer = new PointToPointQueueSenderEndNonRobust<ClientEvent>();
 		this.toServer.setReceiver(addressOfServer);	
 		
