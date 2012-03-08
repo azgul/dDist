@@ -31,6 +31,7 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 
 	@Override
 	protected void acknowledgeEvent(ClientEvent event) {
+		event.timestamp.compareTimeStamp(queue.timestamp);
 		synchronized(clients){
 			if(clients.containsKey(event.clientName))
 				super.acknowledgeEvent(event);
@@ -120,8 +121,20 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 		listener = new ServerListener(queue,this);
 		listener.start();
 		while ((nextOperation = operationsFromClients.get())!=null) {
-			if(nextOperation != null){
-				queue.put(nextOperation);
+			synchronized(queue.timestamp){
+				try{
+					while(queue.timestamp.getTime() < nextOperation.timestamp.getTime())
+					{
+						System.out.println("Catching up..." + queue.timestamp + " < " + nextOperation.timestamp);
+						sleep(5);
+					}
+				} catch(InterruptedException e){
+					
+				}
+				
+				if(nextOperation != null){
+					queue.put(nextOperation);
+				}
 			}
 		}
     }

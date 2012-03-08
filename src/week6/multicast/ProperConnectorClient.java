@@ -34,7 +34,7 @@ public class ProperConnectorClient extends ClientNonRobust{
 			final String myAddress = InetAddress.getLocalHost().getCanonicalHostName();
 			this.fromServer = new PointToPointQueueReceiverEndNonRobust<ClientEvent>();
 			this.fromServer.listenOnPort(clientPortForServer);
-			toServer.put(new ClientEventConnect(clientName,eventID++,new InetSocketAddress(myAddress,clientPortForServer)));
+			toServer.put(new ClientEventConnect(clientName,eventID++,new InetSocketAddress(myAddress,clientPortForServer),timestamp));
 		} catch (IOException e) {
 			return false;
 		}

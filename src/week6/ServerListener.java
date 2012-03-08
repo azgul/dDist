@@ -43,11 +43,11 @@ public class ServerListener extends Thread {
 									& !msg.getSender().getAddress().equals(queue.getAddress()))
 							{
 								ClientEventConnect connect = (ClientEventConnect)ce;
-								ce = new ClientEventRemoteConnect(connect.clientName,connect.eventID,connect.clientAddress);
+								ce = new ClientEventRemoteConnect(connect.clientName,connect.eventID,connect.clientAddress,connect.timestamp);
 							}
 							else if(ce instanceof ClientEventDisconnect & !msg.getSender().getAddress().equals(queue.getAddress())){
 								ClientEventDisconnect dis = (ClientEventDisconnect)ce;
-								ce = new ClientEventRemoteDisconnect(dis.clientName,dis.eventID);
+								ce = new ClientEventRemoteDisconnect(dis.clientName,dis.eventID,dis.timestamp);
 							}
 
 							ce.accept(visitor);
