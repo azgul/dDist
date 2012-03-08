@@ -91,11 +91,38 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 	
 	public void visit(ClientEventConnect event){
 		synchronized(allClients){
-			if(!allClients.contains(event.clientName)){
-				super.visit(event);
+			if(event instanceof ClientEventRemoteConnect) {
+				allClients.add(event.clientName);
+				return;
 			}
+			
+			//System.out.println("Acknowledging event: "+event+"\nAll clients: "+allClients);
+			
+			if(event instanceof ClientEventConnect && allClients.contains(event.clientName)){
+				
+				// Get info for connection
+				final String clientName = event.clientName;
+				final InetSocketAddress clientAddress = event.clientAddress;
+				
+				// Create the Point to Point connection
+				PointToPointQueueSenderEndNonRobust<ClientEvent> queueToClient = new PointToPointQueueSenderEndNonRobust<ClientEvent>(); 
+				
+				// Set the receiver to the client that just tried connecting
+				queueToClient.setReceiver(clientAddress);
+				
+				// Send the connect denied event
+				queueToClient.put(new ClientEventConnectDenied(event.clientName, event.eventID));
+				return;
+			}
+
+			allClients.add(event.clientName);
 		}
-	}
+		//synchronized(allClients){
+		//	if(!allClients.contains(event.clientName)){
+		super.visit(event);
+		//	}
+		//}
+	}	
     
     /**
      * No group to leave, so simply shutsdown.

@@ -5,9 +5,8 @@ import java.net.InetSocketAddress;
 import java.net.InetAddress;
 import java.io.*;
 import java.util.HashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import multicastqueue.Timestamp;
+import week6.ClientEventConnectDenied;
 
 /**
  * A simple, non-robust client for connecting to DistributedCalculator. 
@@ -188,18 +187,23 @@ public class ClientNonRobust extends Thread implements Client  {
      * reported back to the creater of the read event using a callback.
      */
     public void run() {
-	while (!shutdown) {
-	    final ClientEvent nextACK = fromServer.get();
-		timestamp.compareTimeStamp(nextACK.timestamp);
-	    if (nextACK instanceof ClientEventRead) {
-		ClientEventRead eventRead = (ClientEventRead)nextACK;
-		Callback<BigInteger> callback;
-		synchronized (callbacks) {
-		    callback = callbacks.get(new Long(eventRead.eventID));
+		while (!shutdown) {
+			final ClientEvent nextACK = fromServer.get();
+			timestamp.compareTimeStamp(nextACK.timestamp);
+			if (nextACK instanceof ClientEventRead) {
+				ClientEventRead eventRead = (ClientEventRead)nextACK;
+				Callback<BigInteger> callback;
+				synchronized (callbacks) {
+					callback = callbacks.get(new Long(eventRead.eventID));
+				}
+				callback.result(eventRead.getVal());
+			}else if(nextACK instanceof ClientEventConnectDenied){
+				System.out.println("Username already connected...");
+				toServer.shutdown();
+				fromServer.shutdown();
+				shutdown = true;
+			}
 		}
-		callback.result(eventRead.getVal());
-	    }
-	}
-	toServer.shutdown();
+		toServer.shutdown();
     }
 }
