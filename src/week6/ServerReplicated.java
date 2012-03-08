@@ -111,7 +111,7 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 				queueToClient.setReceiver(clientAddress);
 				
 				// Send the connect denied event
-				queueToClient.put(new ClientEventConnectDenied(event.clientName, event.eventID));
+				queueToClient.put(new ClientEventConnectDenied(event.clientName, event.eventID, queue.timestamp));
 				return;
 			}
 

@@ -4,6 +4,7 @@
  */
 package week6;
 
+import multicastqueue.Timestamp;
 import replicated_calculator.ClientEvent;
 import replicated_calculator.ClientEventVisitor;
 
@@ -19,8 +20,8 @@ public class ClientEventConnectDenied extends ClientEvent {
 	 * @param eventID The identifier of the event, @see ClientEvent#eventID
 	 * @param clientAddress The address on which the client open the receiver end of its queue
 	 */
-	public ClientEventConnectDenied(String clientName, long eventID) {
-		super(clientName,eventID);
+	public ClientEventConnectDenied(String clientName, long eventID, Timestamp t) {
+		super(clientName,eventID,t);
 	}
 
 	@Override
