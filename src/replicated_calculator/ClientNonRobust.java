@@ -169,7 +169,9 @@ public class ClientNonRobust extends Thread implements Client  {
 				callback.result(eventRead.getVal());
 			}else if(nextACK instanceof ClientEventConnectDenied){
 				System.out.println("Username already connected...");
-				disconnect();
+				toServer.shutdown();
+				fromServer.shutdown();
+				shutdown = true;
 			}
 		}
 		toServer.shutdown();
