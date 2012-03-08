@@ -25,7 +25,7 @@ public class ClientEventConnectDenied extends ClientEvent {
 
 	@Override
 	public void accept(ClientEventVisitor visitor) {
-		// Do nothing
+		visitor.visit(this);
 	}
 	
 }
