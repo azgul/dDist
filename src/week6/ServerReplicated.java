@@ -98,6 +98,8 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 		synchronized(allClients){
 			if(!allClients.contains(event.clientName)){
 				super.visit(event);
+			}else{
+				allClients.add(event.clientName);
 			}
 		}
 	}
