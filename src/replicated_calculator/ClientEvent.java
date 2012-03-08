@@ -19,7 +19,7 @@ abstract public class ClientEvent implements Serializable {
 	 * @param clientName The name of the client creating the event
 	 * @param eventID A unique identifier  of the event, e.g. a sequence number
 	 */
-	ClientEvent(String clientName, long eventID) {
+	public ClientEvent(String clientName, long eventID) {
 		this.clientName = clientName;
 		this.eventID = eventID;
 	}

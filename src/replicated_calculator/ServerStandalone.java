@@ -64,17 +64,17 @@ public class ServerStandalone extends Thread implements ClientEventVisitor, Serv
     }
     
     protected void acknowledgeEvent(ClientEvent event) {
-	synchronized(clients) {
-	    PointToPointQueueSenderEndNonRobust<ClientEvent> toClient = clients.get(event.clientName);
-	    toClient.put(event);
-	}
+		synchronized(clients) {
+			PointToPointQueueSenderEndNonRobust<ClientEvent> toClient = clients.get(event.clientName);
+			toClient.put(event);
+		}
     }
     
     public void visit(ClientEventAdd eventAdd) {
-	synchronized(valuation) {
-	    valuation.put(eventAdd.res, valuate(eventAdd.left).add(valuate(eventAdd.right)));
-	    acknowledgeEvent(eventAdd);
-	}
+		synchronized(valuation) {
+			valuation.put(eventAdd.res, valuate(eventAdd.left).add(valuate(eventAdd.right)));
+			acknowledgeEvent(eventAdd);
+		}
     }
     
     public void visit(ClientEventAssign eventAssign) {

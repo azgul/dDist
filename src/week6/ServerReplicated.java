@@ -31,6 +31,11 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 
 	@Override
 	protected void acknowledgeEvent(ClientEvent event) {
+		if(event instanceof ClientEventConnect && allClients.contains(event.clientName)){
+			super.acknowledgeEvent(new ClientEventConnectDenied(event.clientName, event.eventID));
+			return;
+		}
+		
 		synchronized(clients){
 			if(clients.containsKey(event.clientName))
 				super.acknowledgeEvent(event);
