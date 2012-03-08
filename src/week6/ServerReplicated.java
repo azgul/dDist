@@ -90,7 +90,13 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 	
 	public void visit(ClientEventConnect event){
 		synchronized(allClients){
-			System.out.println("Acknowledging event: "+event+"\nAll clients: "+allClients);
+			if(event instanceof ClientEventRemoteConnect) {
+				allClients.add(event.clientName);
+				return;
+			}
+			
+			//System.out.println("Acknowledging event: "+event+"\nAll clients: "+allClients);
+			
 			if(event instanceof ClientEventConnect && allClients.contains(event.clientName)){
 				
 				// Get info for connection
