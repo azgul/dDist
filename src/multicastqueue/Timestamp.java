@@ -24,6 +24,11 @@ public class Timestamp implements Comparable<Timestamp>, Serializable
 		return time;
 	}
 
+	public Timestamp getTimestamp()
+	{
+		return this;
+	}
+
 	public String getId()
 	{
 		return id;

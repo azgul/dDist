@@ -25,7 +25,6 @@ public class CalculatorTest {
 	private ProperConnectorClient client[];
 	private int passesPerClient = 4;
 	
-	@Before
 	public void setup() {
 		server = new ServerReplicated[servers];
 		client = new ProperConnectorClient[clients*servers];
@@ -43,7 +42,6 @@ public class CalculatorTest {
 		try {
 			for (int i=1; i<servers; i++) {
 				p++;
-				//System.out.println("Joining with server " + i + " server port " + p + " and client port " + (p+1));
 				server[i].joinGroup(p, new InetSocketAddress(InetAddress.getLocalHost(), port), p+1);
 				p++;
 				wait(1);
@@ -53,11 +51,7 @@ public class CalculatorTest {
 			int c = 0;
 			for (int i=0; i<servers; i++) {
 				for (int j=0; j<clients; j++) {
-					//System.out.println("Connecting with: " + c + " on server " + i + " server port " + (p+1) + " with client port " + (p+100+c));
-					if(client[c].connect(new InetSocketAddress(InetAddress.getLocalHost(), p+1), p+100+c, Integer.toString(c)))
-						//System.out.println("Connected.");
-					//else
-						//System.out.println("Connection failed.");
+					client[c].connect(new InetSocketAddress(InetAddress.getLocalHost(), p+1), p+100+c, Integer.toString(c));
 					c++;
 				}
 				p++;
@@ -71,7 +65,6 @@ public class CalculatorTest {
     }
 	
 	public void putNumbers(String[] vars) {
-		
 		Random r = new Random();
 		int c, var1, var2, var3, type;
 		BigInteger value;
@@ -103,7 +96,56 @@ public class CalculatorTest {
 	}
 	
 	@Test
+	public void doesNewServerGetOldVariables() {
+		ProperConnectorClient c1 = new ProperConnectorClient();
+		ProperConnectorClient c2 = new ProperConnectorClient();
+		ServerReplicated s1 = new ServerReplicated();
+		ServerReplicated s2 = new ServerReplicated();
+		
+		int serverP = 40000;
+		int serverCP = 41000;
+		int clientP = 42000;
+		
+		// starting server 1 up
+		s1.createGroup(serverP, serverCP);
+		wait(1);
+		try {
+			// joining server 1 with server 2
+			s2.joinGroup(serverP+1, new InetSocketAddress(InetAddress.getLocalHost(), serverP), serverCP+1);wait(1);
+		
+			Random r = new Random();
+			BigInteger bi = new BigInteger(8, r);
+			// connecting to server 1
+			c1.connect(new InetSocketAddress(InetAddress.getLocalHost(), serverP), clientP, "1");
+			c1.assign("a", bi);
+
+			// leaving group with server 2
+			s2.leaveGroup();wait(1);
+			
+			s2 = new ServerReplicated();
+			// joining server 1 with server 2
+			s2.joinGroup(serverP+2, new InetSocketAddress(InetAddress.getLocalHost(), serverP), serverCP+2);wait(1);
+
+			c2.connect(new InetSocketAddress(InetAddress.getLocalHost(), serverP+2), clientP+2, "2");
+			
+			c2.read("a", new Callback<BigInteger>(){
+					public void result(BigInteger bi){
+						set(bi);
+					}});
+			
+			wait(2);
+			
+			assertEquals("Should be equal", bi, curr);
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+	@Test
 	public void doesItWork() {
+		setup();
+		wait(5);
+		
 		String[] vars = {"a","b","c","b","e","f"};
 		
 		putNumbers(vars);
@@ -132,68 +174,16 @@ public class CalculatorTest {
 		}
 	}
 	
-	//@Test
-	public void doesItWorkStill() {
-		String[] vars = {"a","b","c","b","e","f"};
-		
-		putNumbers(vars);
-		
-		for (int i=0; i<4; i++) {
-			client[i].disconnect();
-		}
-		wait(30);
-		server[0].leaveGroup();
-		server[0] = null;
-		server[0] = new ServerReplicated();
-		wait(30);
-		
-		int p = port;
-		
-		try {
-			p++;
-			System.out.println("Joining with server port " + p + " and client port " + (p+1));
-			server[0].joinGroup(port, new InetSocketAddress(InetAddress.getLocalHost(), p+1), port+1);
-		
-			wait(1);
-			for (int i=0; i<4; i++) {
-				client[i].connect(new InetSocketAddress(InetAddress.getLocalHost(), port+2), p+100+i, Integer.toString(i));
-				p=p+2;
-				wait(1);
-			}
-		
-		} catch (IOException e) {}
-		
-		for(String s : vars){
-			curr = null;
-			prev = null;
-			for(int i = 0; i < client.length; i++){
-				final String cl = "Client" + i + ": " + s + " = ";
-				client[i].read(s, new Callback<BigInteger>(){
-					public void result(BigInteger bi){
-						set(bi);
-					}
-				});
-				wait(1);
-				System.out.println(cl + curr);
-				
-				if (prev!=null)
-					assertEquals(curr, prev);
-				
-				prev=curr;
-			}
-			wait(1);
-		}
-	}
-	
 	public void set(BigInteger bi) {
 		curr = bi;
+		System.out.println("It was set to " + bi);
 	}
 	
 	private BigInteger curr, prev;
 	
 	public static void wait(int secs) {
 		try {
-			Thread.currentThread().sleep(secs*300);
+			Thread.currentThread().sleep(secs*1000);
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(-1);

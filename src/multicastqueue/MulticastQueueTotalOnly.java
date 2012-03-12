@@ -8,14 +8,18 @@ import PointToPoint.PointToPointQueueSenderEndNonRobust;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.PriorityBlockingQueue;
+import replicated_calculator.Server;
+import week6.ServerReplicated;
 
 /**
  * An implementation of MulticastQueue, which obly implements the FIFO
@@ -54,6 +58,8 @@ public class MulticastQueueTotalOnly<E extends Serializable>
 	 * sending to the queue is done. Not strictly needed, but nicer.
 	 */
 	private HashSet<InetSocketAddress> hasConnectionToUs;
+	
+	private ServerReplicated server;
 
 	/**
 	 * This class of objects is used to send a join request.  It will
@@ -190,6 +196,18 @@ public class MulticastQueueTotalOnly<E extends Serializable>
 		sendingThread.start();
 	}
 	
+	public MulticastQueueTotalOnly(ServerReplicated s)
+	{
+		incoming = new PointToPointQueueReceiverEndNonRobust<MulticastMessage>();
+		pendingGets = new ConcurrentLinkedQueue<MulticastMessage>();
+		pendingSends = new ConcurrentLinkedQueue<E>();
+		outgoing = new ConcurrentHashMap<InetSocketAddress, PointToPointQueueSenderEnd<MulticastMessage>>();
+		sendingThread = new SendingThread();
+		hasConnectionToUs = new HashSet<InetSocketAddress>();
+		server = s;
+		sendingThread.start();
+	}
+	
 	public InetSocketAddress getAddress(){
 		return myAddress;
 	}
@@ -274,6 +292,7 @@ public class MulticastQueueTotalOnly<E extends Serializable>
 	public void run()
 	{
 		log("starting receiving thread.");
+		
 		MulticastMessage msg = incoming.get();
 		/* By contract we know that msg == null only occurs if
 				 * incoming is shut down, which we are the only ones that can
@@ -449,6 +468,7 @@ public class MulticastQueueTotalOnly<E extends Serializable>
 		PointToPointQueueSenderEnd<MulticastMessage> out
 				= connectToPeerAt(jmsg.getAddressOfJoiner());
 		out.put(new WellcomeMessage(myAddress, timestamp.getNextTimeStamp()));
+		out.put(new MulticastMessagePayload(myAddress, server.getVariableMap(), timestamp.getTimestamp()));
 		// When this peer receives the wellcome message it will
 		// connect to us, so let us remember that she has a connection
 		// to us.
@@ -506,6 +526,9 @@ public class MulticastQueueTotalOnly<E extends Serializable>
 		Frame newFrame = new Frame(pmsg, missingPeers);
 		frames.add(newFrame);
 		
+		if (pmsg.getPayload() instanceof HashMap) {
+			server.setVariableMap((HashMap<String,BigInteger>)pmsg.getPayload());
+		}
 
 		sendToAllExceptMe(new MulticastMessageAcknowledge(myAddress, pmsg.getTimestamp()));
 	}

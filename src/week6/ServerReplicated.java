@@ -28,6 +28,8 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 	protected MulticastQueueTotalOnly<ClientEvent> queue;
 	protected ServerListener listener;
 	protected HashSet<String> allClients = new HashSet<String>();
+	protected HashMap<String,BigInteger> valuation 
+	= new HashMap<String,BigInteger>();
 
 	@Override
 	protected void acknowledgeEvent(ClientEvent event) {
@@ -38,14 +40,12 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 		}
 	}
 	
-	
-    
     public void createGroup(int serverPort, int clientPort) {
 		operationsFromClients = null;
 		try {
 			operationsFromClients = new PointToPointQueueReceiverEndNonRobust<ClientEvent>();
 			operationsFromClients.listenOnPort(clientPort);
-			queue = new MulticastQueueTotalOnly<ClientEvent>();
+			queue = new MulticastQueueTotalOnly<ClientEvent>(this);
 			queue.createGroup(serverPort, DeliveryGuarantee.TOTAL);
 		} catch (IOException e) {
 			System.err.println("Cannot start server!");
@@ -63,15 +63,15 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 		try {
 			operationsFromClients = new PointToPointQueueReceiverEndNonRobust<ClientEvent>();
 			operationsFromClients.listenOnPort(clientPort);
-			queue = new MulticastQueueTotalOnly<ClientEvent>();
+			queue = new MulticastQueueTotalOnly<ClientEvent>(this);
 			queue.joinGroup(serverPort, knownPeer, DeliveryGuarantee.TOTAL);
 			
 		} catch (IOException e) {
 			System.err.println("Cannot start server!");
 			System.err.println("Check your network connection!");
-			System.err.println("Check that no other service runs on port " + Parameters.serverPortForClients + "!");
+			System.err.println("Check that no other service runs on port " + clientPort + " or " + serverPort + "!");
 			System.err.println();
-			System.err.println(e);
+			e.printStackTrace();
 			System.exit(-1);
 		}		
 		this.start();
@@ -142,6 +142,9 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 			clients.remove(client).shutdown();
 		}
 		listener.run = false;
+		try {
+			Thread.sleep(500);
+		} catch (Exception e) {e.printStackTrace();}
 		listener.interrupt();
     }
     
@@ -172,5 +175,13 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 			}
 		}
     }
+	
+	public synchronized HashMap<String,BigInteger> getVariableMap() {
+		return (HashMap<String,BigInteger>)valuation.clone();
+	}
+	
+	public synchronized void setVariableMap(HashMap<String,BigInteger> vm) {
+		valuation = vm;
+	}
     
 }
