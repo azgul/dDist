@@ -468,6 +468,7 @@ public class MulticastQueueTotalOnly<E extends Serializable>
 		PointToPointQueueSenderEnd<MulticastMessage> out
 				= connectToPeerAt(jmsg.getAddressOfJoiner());
 		out.put(new WellcomeMessage(myAddress, timestamp.getNextTimeStamp()));
+		System.out.println("Sending " + server.getVariableMap().toString());
 		out.put(new MulticastMessagePayload(myAddress, server.getVariableMap(), timestamp.getTimestamp()));
 		// When this peer receives the wellcome message it will
 		// connect to us, so let us remember that she has a connection
@@ -527,6 +528,7 @@ public class MulticastQueueTotalOnly<E extends Serializable>
 		frames.add(newFrame);
 		
 		if (pmsg.getPayload() instanceof HashMap) {
+			System.out.println("Received "+ pmsg.getPayload());
 			server.setVariableMap((HashMap<String,BigInteger>)pmsg.getPayload());
 		}
 

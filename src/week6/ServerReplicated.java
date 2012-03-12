@@ -80,12 +80,14 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 	public void visit(ClientEventRemoteConnect event){
 		synchronized(allClients){
 			allClients.add(event.clientName);
+			System.out.println("remote connect");
 		}
 	}
 	
 	public void visit(ClientEventRemoteDisconnect event){
 		synchronized(allClients){
 			allClients.remove(event.clientName);
+			System.out.println("remote dc");
 		}
 	}
 	

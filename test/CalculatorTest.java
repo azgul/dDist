@@ -96,6 +96,39 @@ public class CalculatorTest {
 	}
 	
 	@Test
+	public void doesItWork() {
+		setup();
+		wait(5);
+		
+		String[] vars = {"a","b","c","b","e","f"};
+		
+		putNumbers(vars);
+		
+		wait(1);
+		
+		for(String s : vars){
+			curr = null;
+			prev = null;
+			for(int i = 0; i < client.length; i++){
+				final String cl = "Client" + i + ": " + s + " = ";
+				client[i].read(s, new Callback<BigInteger>(){
+					public void result(BigInteger bi){
+						set(bi);
+					}
+				});
+				wait(1);
+				System.out.println(cl + curr);
+				
+				if (prev!=null)
+					assertEquals(curr, prev);
+				
+				prev=curr;
+			}
+			wait(1);
+		}
+	}
+	
+	@Test
 	public void doesNewServerGetOldVariables() {
 		ProperConnectorClient c1 = new ProperConnectorClient();
 		ProperConnectorClient c2 = new ProperConnectorClient();
@@ -127,50 +160,18 @@ public class CalculatorTest {
 			s2.joinGroup(serverP+2, new InetSocketAddress(InetAddress.getLocalHost(), serverP), serverCP+2);wait(1);
 
 			c2.connect(new InetSocketAddress(InetAddress.getLocalHost(), serverP+2), clientP+2, "2");
+			c2.disconnect();
 			
-			c2.read("a", new Callback<BigInteger>(){
+			/*c2.read("a", new Callback<BigInteger>(){
 					public void result(BigInteger bi){
 						set(bi);
 					}});
-			
+			*/
 			wait(2);
 			
 			assertEquals("Should be equal", bi, curr);
 		} catch (Exception e){
 			e.printStackTrace();
-		}
-	}
-	
-	@Test
-	public void doesItWork() {
-		setup();
-		wait(5);
-		
-		String[] vars = {"a","b","c","b","e","f"};
-		
-		putNumbers(vars);
-		
-		wait(1);
-		
-		for(String s : vars){
-			curr = null;
-			prev = null;
-			for(int i = 0; i < client.length; i++){
-				final String cl = "Client" + i + ": " + s + " = ";
-				client[i].read(s, new Callback<BigInteger>(){
-					public void result(BigInteger bi){
-						set(bi);
-					}
-				});
-				wait(1);
-				System.out.println(cl + curr);
-				
-				if (prev!=null)
-					assertEquals(curr, prev);
-				
-				prev=curr;
-			}
-			wait(1);
 		}
 	}
 	
