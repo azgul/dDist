@@ -1,5 +1,7 @@
 package replicated_calculator;
 
+import multicastqueue.Timestamp;
+
 /**
  * An event describing the entering of a block of events which must be 
  * executed atomically.
@@ -10,8 +12,8 @@ package replicated_calculator;
 
 public class ClientEventBeginAtomic extends ClientEvent {
 
-	public ClientEventBeginAtomic(String clientName, long eventID) {
-		super(clientName,eventID);
+	public ClientEventBeginAtomic(String clientName, long eventID, Timestamp t) {
+		super(clientName,eventID,t);
 	}
 
 	public void accept(ClientEventVisitor visitor) {

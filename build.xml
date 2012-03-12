@@ -30,6 +30,8 @@ dDist build management.
 	runMultiChatServerGUI:Starts the MultiChat with GUI
 	runMultiChatClientGUI:Starts the MultiChat with GUI and 1 parameter (host)
 	runMultiChatClientGUP:Starts the MultiChat with GUI and 3 parameters (host, ownPort, serverPort)
+	runCalculatorServer:  Starts the replicated calculator server
+	runCalculatorClient:  Starts the replicated calculator client
     </echo>
   </target>
 
@@ -129,6 +131,22 @@ dDist build management.
 		<path refid="classPath"/>
       </classpath>
     </java>
+  </target>
+  
+  <target name="runCalculatorServer" depends="buildAll">
+	  <java fork="yes" classname="replicated_calculator.ServerTUI">
+		  <classpath>
+			  <path refid="classPath"/>
+		  </classpath>
+	  </java>
+  </target>
+  
+  <target name="runCalculatorClient" depends="buildAll">
+	  <java fork="yes" classname="replicated_calculator.ClientTUI">
+		  <classpath>
+			  <path refid="classPath"/>
+		  </classpath>
+	  </java>
   </target>
   
   <!-- Run Unit Tests -->

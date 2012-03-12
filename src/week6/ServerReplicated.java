@@ -4,10 +4,13 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.net.InetSocketAddress;
+import java.util.HashSet;
+import multicastqueue.MulticastMessage;
 import multicast.MulticastQueue;
-import multicast.MulticastQueue.DeliveryGuarantee;
+import multicastqueue.MulticastQueue.DeliveryGuarantee;
+import multicastqueue.MulticastQueueTotalOnly;
+import multicastqueue.Timestamp;
 import replicated_calculator.*;
-import week6.multicast.CalculatorQueue;
 import week4.multicast.messages.AbstractLamportMessage;
 import week6.multicast.messages.ClientEventMessage;
 
@@ -22,14 +25,27 @@ import week6.multicast.messages.ClientEventMessage;
 
 public class ServerReplicated extends ServerStandalone implements ClientEventVisitor, Server {
 
-	protected CalculatorQueue queue;
+	protected MulticastQueueTotalOnly<ClientEvent> queue;
+	protected ServerListener listener;
+	protected HashSet<String> allClients = new HashSet<String>();
+
+	@Override
+	protected void acknowledgeEvent(ClientEvent event) {
+		event.timestamp.compareTimeStamp(queue.timestamp);
+		synchronized(clients){
+			if(clients.containsKey(event.clientName))
+				super.acknowledgeEvent(event);
+		}
+	}
+	
+	
     
     public void createGroup(int serverPort, int clientPort) {
 		operationsFromClients = null;
 		try {
 			operationsFromClients = new PointToPointQueueReceiverEndNonRobust<ClientEvent>();
 			operationsFromClients.listenOnPort(clientPort);
-			queue = new CalculatorQueue();
+			queue = new MulticastQueueTotalOnly<ClientEvent>();
 			queue.createGroup(serverPort, DeliveryGuarantee.TOTAL);
 		} catch (IOException e) {
 			System.err.println("Cannot start server!");
@@ -47,7 +63,7 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 		try {
 			operationsFromClients = new PointToPointQueueReceiverEndNonRobust<ClientEvent>();
 			operationsFromClients.listenOnPort(clientPort);
-			queue = new CalculatorQueue();
+			queue = new MulticastQueueTotalOnly<ClientEvent>();
 			queue.joinGroup(serverPort, knownPeer, DeliveryGuarantee.TOTAL);
 			
 		} catch (IOException e) {
@@ -60,6 +76,60 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 		}		
 		this.start();
     }
+	
+	public void visit(ClientEventRemoteConnect event){
+		synchronized(allClients){
+			allClients.add(event.clientName);
+		}
+	}
+	
+	public void visit(ClientEventRemoteDisconnect event){
+		synchronized(allClients){
+			allClients.remove(event.clientName);
+		}
+	}
+	
+	public void visit(ClientEventConnect event){
+		synchronized(allClients){
+			if(event instanceof ClientEventRemoteConnect) {
+				allClients.add(event.clientName);
+				return;
+			}
+			
+			//System.out.println("Acknowledging event: "+event+"\nAll clients: "+allClients);
+			
+			if(event instanceof ClientEventConnect && allClients.contains(event.clientName)){
+				
+				// Get info for connection
+				final String clientName = event.clientName;
+				final InetSocketAddress clientAddress = event.clientAddress;
+				
+				// Create the Point to Point connection
+				PointToPointQueueSenderEndNonRobust<ClientEvent> queueToClient = new PointToPointQueueSenderEndNonRobust<ClientEvent>(); 
+				
+				// Set the receiver to the client that just tried connecting
+				queueToClient.setReceiver(clientAddress);
+				
+				// Send the connect denied event
+				queueToClient.put(new ClientEventConnectDenied(event.clientName, event.eventID, queue.timestamp));
+				return;
+			}
+
+			allClients.add(event.clientName);
+		}
+		//synchronized(allClients){
+		//	if(!allClients.contains(event.clientName)){
+		super.visit(event);
+		//	}
+		//}
+	}	
+	
+	public void visit(ClientEventDisconnect event){
+		synchronized(allClients){
+			allClients.remove(event.clientName);
+		}
+		super.visit(event);
+	}
     
     /**
      * No group to leave, so simply shutsdown.
@@ -71,6 +141,8 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 		for (String client : clients.keySet()) {
 			clients.remove(client).shutdown();
 		}
+		listener.run = false;
+		listener.interrupt();
     }
     
     /** 
@@ -80,11 +152,23 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 	@Override
     public void run() {
 		ClientEvent nextOperation = null;
-		ServerListener listener = new ServerListener(queue,this);
+		listener = new ServerListener(queue,this);
 		listener.start();
 		while ((nextOperation = operationsFromClients.get())!=null) {
-			if(nextOperation != null){
-				queue.put(nextOperation);
+			synchronized(queue.timestamp){
+				try{
+					while(queue.timestamp.getTime() < nextOperation.timestamp.getTime())
+					{
+						System.out.println("Catching up..." + queue.timestamp + " < " + nextOperation.timestamp);
+						sleep(5);
+					}
+				} catch(InterruptedException e){
+					
+				}
+				
+				if(nextOperation != null){
+					queue.put(nextOperation);
+				}
 			}
 		}
     }

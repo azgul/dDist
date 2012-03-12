@@ -15,7 +15,6 @@ import replicated_calculator.Callback;
 import replicated_calculator.ClientNonRobust;
 import replicated_calculator.ClientTUI;
 import week6.ServerReplicated;
-import week6.multicast.CalculatorQueue;
 import week6.multicast.ProperConnectorClient;
 
 public class CalculatorTest {

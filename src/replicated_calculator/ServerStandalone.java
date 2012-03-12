@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.net.InetSocketAddress;
+import week6.ClientEventConnectDenied;
 
 /**
  * 
@@ -64,17 +65,17 @@ public class ServerStandalone extends Thread implements ClientEventVisitor, Serv
     }
     
     protected void acknowledgeEvent(ClientEvent event) {
-	synchronized(clients) {
-	    PointToPointQueueSenderEndNonRobust<ClientEvent> toClient = clients.get(event.clientName);
-	    toClient.put(event);
-	}
+		synchronized(clients) {
+			PointToPointQueueSenderEndNonRobust<ClientEvent> toClient = clients.get(event.clientName);
+			toClient.put(event);
+		}
     }
     
     public void visit(ClientEventAdd eventAdd) {
-	synchronized(valuation) {
-	    valuation.put(eventAdd.res, valuate(eventAdd.left).add(valuate(eventAdd.right)));
-	    acknowledgeEvent(eventAdd);
-	}
+		synchronized(valuation) {
+			valuation.put(eventAdd.res, valuate(eventAdd.left).add(valuate(eventAdd.right)));
+			acknowledgeEvent(eventAdd);
+		}
     }
     
     public void visit(ClientEventAssign eventAssign) {
@@ -169,5 +170,9 @@ public class ServerStandalone extends Thread implements ClientEventVisitor, Serv
 			nextOperation.accept(this);
 		}
     }
+
+	public void visit(ClientEventConnectDenied event){
+		System.out.println("Visitor of a denied connect of user "+event.clientName+".");
+	}
     
 }

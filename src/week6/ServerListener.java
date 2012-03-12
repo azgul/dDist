@@ -4,10 +4,14 @@
  */
 package week6;
 
-import multicast.MulticastMessage;
+import multicastqueue.MulticastMessage;
 import multicast.MulticastQueue;
+import multicastqueue.MulticastMessagePayload;
+import multicastqueue.MulticastQueueTotalOnly;
+import replicated_calculator.ClientEvent;
+import replicated_calculator.ClientEventConnect;
+import replicated_calculator.ClientEventDisconnect;
 import replicated_calculator.ClientEventVisitor;
-import week6.multicast.CalculatorQueue;
 import week6.multicast.messages.ClientEventMessage;
 
 /**
@@ -15,25 +19,41 @@ import week6.multicast.messages.ClientEventMessage;
  * @author Randi K. Hillerøe <silwing@gmail.com>
  */
 public class ServerListener extends Thread {
-	CalculatorQueue queue;
-	ClientEventVisitor visitor;
+	MulticastQueueTotalOnly<ClientEvent> queue;
+	ServerReplicated visitor;
 	long timeout = 1;
+	public boolean run = true;
 	
-	public ServerListener(CalculatorQueue queue, ClientEventVisitor v){
+	public ServerListener(MulticastQueueTotalOnly<ClientEvent> queue, ServerReplicated v){
 		this.queue = queue;
 		visitor = v;
 	}
 
 	@Override
 	public void run() {
-		ClientEventMessage msg;
+		MulticastMessage msg;
 		
 		try{
-			while(true){
+			while(run){
 				if((msg = queue.get()) != null){
-						msg.getClientEvent().accept(visitor);
+						if(msg instanceof MulticastMessagePayload){
+							ClientEvent ce = (ClientEvent)((MulticastMessagePayload)msg).getPayload();
+							//System.out.println(queue.getAddress()+" - Got message: "+ce+" from "+ msg.getSender());
+							//System.out.println(msg.getSender().equals(queue.getAddress()));
+							if(ce instanceof ClientEventConnect 
+									&& !msg.getSender().equals(queue.getAddress()))
+							{
+								ClientEventConnect connect = (ClientEventConnect)ce;
+								ce = new ClientEventRemoteConnect(connect.clientName,connect.eventID,connect.clientAddress,connect.timestamp);
+							}
+							else if(ce instanceof ClientEventDisconnect && !msg.getSender().equals(queue.getAddress())){
+								ClientEventDisconnect dis = (ClientEventDisconnect)ce;
+								ce = new ClientEventRemoteDisconnect(dis.clientName,dis.eventID,dis.timestamp);
+							}
+							//System.out.println(queue.getAddress()+" - accepted: " + ce);
+							ce.accept(visitor);
+						}
 				}
-				
 				Thread.sleep(timeout);
 			}
 		}catch(InterruptedException e){

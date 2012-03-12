@@ -2,6 +2,7 @@ package replicated_calculator;
 import java.io.*;
 import java.math.*;
 import point_to_point_queue.*;
+import week6.multicast.ProperConnectorClient;
 
 /**
  * 
@@ -22,7 +23,7 @@ public class ClientTUI {
 	/**
 	 * Here you would instantiation your own, more impressive client instead.
 	 */
-	Client client = new ClientNonRobust();
+	Client client = new ProperConnectorClient();
 	
 	try {
 	    // For reading from standard input

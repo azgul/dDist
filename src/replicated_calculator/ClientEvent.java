@@ -1,5 +1,6 @@
 package replicated_calculator;
 import java.io.*;
+import multicastqueue.Timestamp;
 
 /**
  * Super class describing event created by clients. Carries the name of the client
@@ -13,15 +14,17 @@ abstract public class ClientEvent implements Serializable {
 
 	public final String clientName;
 	public final long eventID;
+	public Timestamp timestamp;
 	
 	/**
 	 * 
 	 * @param clientName The name of the client creating the event
 	 * @param eventID A unique identifier  of the event, e.g. a sequence number
 	 */
-	ClientEvent(String clientName, long eventID) {
+	public ClientEvent(String clientName, long eventID, Timestamp t) {
 		this.clientName = clientName;
 		this.eventID = eventID;
+		timestamp = t;
 	}
 	
 	/**

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.math.BigInteger;
+import week6.ServerReplicated;
 
 
 /**
@@ -26,7 +27,7 @@ public class ServerTUI {
 	/**
 	 * Here you would instantiation your own, more impressive server instead.
 	 */
-	Server server = new ServerStandalone();
+	ServerReplicated server = new ServerReplicated();
 	
 	try {
 	    // For reading from standard input
@@ -49,9 +50,10 @@ public class ServerTUI {
 	    }
 	    
 	    if (s.equals("")) {
-		server.createGroup(Parameters.serverPortForServers);
+			server.createGroup(Parameters.serverPortForServers, Parameters.serverPortForClients);
 	    } else {
-		server.joinGroup(new InetSocketAddress(serverAddress,Parameters.serverPortForServers));
+		//server.joinGroup(new InetSocketAddress(serverAddress,Parameters.serverPortForServers));
+			server.joinGroup(Parameters.serverPortForServers, new InetSocketAddress(serverAddress, Parameters.serverPortForServers), Parameters.serverPortForClients);
 	    }
 	    
 	    while ((s = stdin.readLine()) != null) { 
