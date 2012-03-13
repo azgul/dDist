@@ -85,6 +85,9 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 	}
 	
 	public void visit(ClientEventRemoteDisconnect event){
+		// This probably wont ever be called...
+		
+		System.out.println("CERD on "+queue.getAddress());
 		synchronized(allClients){
 			allClients.remove(event.clientName);
 			System.out.println("remote dc");
@@ -130,6 +133,13 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 		synchronized(allClients){
 			allClients.remove(event.clientName);
 		}
+
+		// Return if this is a CERD.
+		// For some reason, this one is called as handler for CERD
+		// due to the fact that CERD extends CED... Great success -_-
+		if(event instanceof ClientEventRemoteDisconnect)
+			return;
+
 		super.visit(event);
 	}
     

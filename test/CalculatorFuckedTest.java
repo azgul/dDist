@@ -52,14 +52,16 @@ public class CalculatorFuckedTest {
 			return;
 		}
 		
-		c.read("z", new Callback<BigInteger>(){
+		/*c.read("z", new Callback<BigInteger>(){
 
 			@Override
 			public void result(BigInteger res) {
 				System.out.println("Result: "+res);
 			}
 			
-		});
+		});*/
+		
+		c.disconnect();
 		
 		wait(5);
 		
