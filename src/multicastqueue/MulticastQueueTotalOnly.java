@@ -366,7 +366,7 @@ public class MulticastQueueTotalOnly<E extends Serializable>
 			{
 				if(f.getMessage() == null)
 				{
-					System.out.println(myAddress + "Null message");
+					//System.out.println(myAddress + "Null message");
 					break;
 				}
 				addAndNotify(pendingGets, f.getMessage());
@@ -436,8 +436,7 @@ public class MulticastQueueTotalOnly<E extends Serializable>
 		log(jrmsg);
 		// When the joining peer sent the join request it connected to
 		// us, so let us remember that she has a connection to us.
-		synchronized (hasConnectionToUs)
-		{
+		synchronized (hasConnectionToUs){
 			hasConnectionToUs.add(jrmsg.getSender());
 		}
 		// Buffer a join message so it can be gotten.
@@ -446,7 +445,12 @@ public class MulticastQueueTotalOnly<E extends Serializable>
 		// Then we tell the rest of the group that we have a new member.
 		sendToAllExceptMe(new JoinRelayMessage(myAddress, jrmsg.getSender(), timestamp.getNextTimeStamp()));
 		// Then we connect to the new peer.
-		connectToPeerAt(jrmsg.getSender());
+		PointToPointQueueSenderEnd<MulticastMessage> out = connectToPeerAt(jrmsg.getSender());
+		
+		HashMap<String,BigInteger> map = server.getVariableMap();
+		System.out.println("Sending " + map.toString());
+		
+		out.put(new MulticastMessagePayload(myAddress, map, timestamp.getTimestamp()));
 	}
 
 	/**
@@ -468,8 +472,7 @@ public class MulticastQueueTotalOnly<E extends Serializable>
 		PointToPointQueueSenderEnd<MulticastMessage> out
 				= connectToPeerAt(jmsg.getAddressOfJoiner());
 		out.put(new WellcomeMessage(myAddress, timestamp.getNextTimeStamp()));
-		System.out.println("Sending " + server.getVariableMap().toString());
-		out.put(new MulticastMessagePayload(myAddress, server.getVariableMap(), timestamp.getTimestamp()));
+
 		// When this peer receives the wellcome message it will
 		// connect to us, so let us remember that she has a connection
 		// to us.
@@ -528,7 +531,7 @@ public class MulticastQueueTotalOnly<E extends Serializable>
 		frames.add(newFrame);
 		
 		if (pmsg.getPayload() instanceof HashMap) {
-			System.out.println("Received "+ pmsg.getPayload());
+			//System.out.println("Received "+ pmsg.getPayload());
 			server.setVariableMap((HashMap<String,BigInteger>)pmsg.getPayload());
 		}
 

@@ -28,8 +28,8 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 	protected MulticastQueueTotalOnly<ClientEvent> queue;
 	protected ServerListener listener;
 	protected HashSet<String> allClients = new HashSet<String>();
-	protected HashMap<String,BigInteger> valuation 
-	= new HashMap<String,BigInteger>();
+	//protected HashMap<String,BigInteger> valuation 
+	//= new HashMap<String,BigInteger>();
 
 	@Override
 	protected void acknowledgeEvent(ClientEvent event) {
@@ -186,14 +186,10 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 				}
 			}
 		}
-    }
+    }    
 	
-	public synchronized HashMap<String,BigInteger> getVariableMap() {
-		return (HashMap<String,BigInteger>)valuation.clone();
+	public void setVariableMap(HashMap<String,BigInteger> vm) {
+		System.out.println("Setting variables on "+queue.getAddress());
+		super.setVariableMap(vm);
 	}
-	
-	public synchronized void setVariableMap(HashMap<String,BigInteger> vm) {
-		valuation = vm;
-	}
-    
 }

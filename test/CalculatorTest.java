@@ -95,7 +95,7 @@ public class CalculatorTest {
 		}
 	}
 	
-	@Test
+	/*@Test
 	public void doesItWork() {
 		setup();
 		wait(5);
@@ -126,7 +126,7 @@ public class CalculatorTest {
 			}
 			wait(1);
 		}
-	}
+	}*/
 	
 	@Test
 	public void doesNewServerGetOldVariables() {
@@ -143,36 +143,42 @@ public class CalculatorTest {
 		s1.createGroup(serverP, serverCP);
 		wait(1);
 		try {
-			// joining server 1 with server 2
-			s2.joinGroup(serverP+1, new InetSocketAddress(InetAddress.getLocalHost(), serverP), serverCP+1);wait(1);
-		
 			Random r = new Random();
+			
 			BigInteger bi = new BigInteger(8, r);
 			// connecting to server 1
-			c1.connect(new InetSocketAddress(InetAddress.getLocalHost(), serverP), clientP, "1");
+			c1.connect(new InetSocketAddress(InetAddress.getLocalHost(), serverCP), clientP, "1");
 			c1.assign("a", bi);
-
-			// leaving group with server 2
-			s2.leaveGroup();wait(1);
+			c1.assign("b", bi);
+			c1.add("a", "b", "c");
 			
-			s2 = new ServerReplicated();
+			wait(5);
+
 			// joining server 1 with server 2
-			s2.joinGroup(serverP+2, new InetSocketAddress(InetAddress.getLocalHost(), serverP), serverCP+2);wait(1);
+			s2.joinGroup(serverP+1, new InetSocketAddress(InetAddress.getLocalHost(), serverP), serverCP+1);
+			
+			wait(5);
 
-			c2.connect(new InetSocketAddress(InetAddress.getLocalHost(), serverP+2), clientP+2, "2");
-			c2.disconnect();
+			c2.connect(new InetSocketAddress(InetAddress.getLocalHost(), serverCP+2), clientP+2, "2");
+			//c2.disconnect();
 			
-			/*c2.read("a", new Callback<BigInteger>(){
-					public void result(BigInteger bi){
-						set(bi);
-					}});
-			*/
+			wait(5);
+
+			c2.read("a", new Callback<BigInteger>(){
+				public void result(BigInteger bi){
+					System.out.println("Callback lolz");
+				set(bi);
+			}});
+
 			wait(2);
-			
+
 			assertEquals("Should be equal", bi, curr);
 		} catch (Exception e){
 			e.printStackTrace();
 		}
+		
+		s1.leaveGroup();
+		//s2.leaveGroup();
 	}
 	
 	public void set(BigInteger bi) {

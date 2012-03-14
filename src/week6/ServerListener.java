@@ -50,6 +50,7 @@ public class ServerListener extends Thread {
 								ce = new ClientEventRemoteDisconnect(dis.clientName,dis.eventID,dis.timestamp);
 							}
 							
+							System.out.println("Got event: "+ce);
 							//System.out.println(queue.getAddress()+" - accepted: " + ce);
 							ce.accept(visitor);
 						}

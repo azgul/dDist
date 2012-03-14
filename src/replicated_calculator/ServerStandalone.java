@@ -55,14 +55,14 @@ public class ServerStandalone extends Thread implements ClientEventVisitor, Serv
     }
     
     protected BigInteger valuate(String var) {
-	BigInteger val;
-	synchronized(valuation) {
-	    val = valuation.get(var);
-	}
-	if (val==null) {
-	    val = BigInteger.ZERO;
-	}
-	return val;
+		BigInteger val;
+		synchronized(valuation) {
+			val = valuation.get(var);
+		}
+		if (val==null) {
+			val = BigInteger.ZERO;
+		}
+		return val;
     }
     
     protected void acknowledgeEvent(ClientEvent event) {
@@ -74,6 +74,7 @@ public class ServerStandalone extends Thread implements ClientEventVisitor, Serv
     
     public void visit(ClientEventAdd eventAdd) {
 		synchronized(valuation) {
+			System.out.println("Adding "+eventAdd.left+"+"+eventAdd.right+"="+eventAdd.res);
 			valuation.put(eventAdd.res, valuate(eventAdd.left).add(valuate(eventAdd.right)));
 			acknowledgeEvent(eventAdd);
 		}
@@ -81,6 +82,7 @@ public class ServerStandalone extends Thread implements ClientEventVisitor, Serv
     
     public void visit(ClientEventAssign eventAssign) {
 	synchronized(valuation) {
+		System.out.println("Assigning "+eventAssign.var+" to "+eventAssign.val);
 	    valuation.put(eventAssign.var, eventAssign.val);
 	    acknowledgeEvent(eventAssign);
 	}
@@ -153,10 +155,12 @@ public class ServerStandalone extends Thread implements ClientEventVisitor, Serv
      * @param eventRead The read event from the client.
      */
     public void visit(ClientEventRead eventRead) {
-	synchronized(valuation) {
-	    eventRead.setVal(valuate(eventRead.var));
-	    acknowledgeEvent(eventRead);
-	}
+		synchronized(valuation) {
+			System.out.println("Read variable "+eventRead.var+" = "+valuate(eventRead.var));
+			System.out.println("HashMap: "+valuation);
+			eventRead.setVal(valuate(eventRead.var));
+			acknowledgeEvent(eventRead);
+		}
     }
     
     protected PointToPointQueueReceiverEndNonRobust<ClientEvent> operationsFromClients;
@@ -174,6 +178,19 @@ public class ServerStandalone extends Thread implements ClientEventVisitor, Serv
 
 	public void visit(ClientEventConnectDenied event){
 		System.out.println("Visitor of a denied connect of user "+event.clientName+".");
+	}
+	
+	public HashMap<String,BigInteger> getVariableMap() {
+		synchronized(valuation){
+			return (HashMap<String,BigInteger>)valuation;
+		}
+	}
+	
+	public void setVariableMap(HashMap<String,BigInteger> vm) {
+		synchronized(valuation){
+			valuation.putAll(vm);
+			System.out.println("After putting all: "+valuation);
+		}
 	}
     
 }
