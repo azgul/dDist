@@ -89,6 +89,7 @@ public class ClientNonRobust extends Thread implements Client  {
 			
 			BufferedWriter w = new BufferedWriter(new FileWriter(f));
 			w.write(String.valueOf(timestamp.getTime()));
+			w.close();
 		}catch(IOException ex){
 			System.out.println("Failed to save timestamp.");
 		}
