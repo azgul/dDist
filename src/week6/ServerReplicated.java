@@ -101,8 +101,6 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 				return;
 			}
 			
-			//System.out.println("Acknowledging event: "+event+"\nAll clients: "+allClients);
-			
 			if(event instanceof ClientEventConnect && allClients.contains(event.clientName)){
 				
 				// Get info for connection
@@ -122,11 +120,7 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
 
 			allClients.add(event.clientName);
 		}
-		//synchronized(allClients){
-		//	if(!allClients.contains(event.clientName)){
 		super.visit(event);
-		//	}
-		//}
 	}	
 	
 	public void visit(ClientEventDisconnect event){
@@ -189,7 +183,7 @@ public class ServerReplicated extends ServerStandalone implements ClientEventVis
     }    
 	
 	public void setVariableMap(HashMap<String,BigInteger> vm) {
-		System.out.println("Setting variables on "+queue.getAddress());
+		//System.out.println("Setting variables on "+queue.getAddress());
 		super.setVariableMap(vm);
 	}
 }

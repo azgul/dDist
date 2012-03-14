@@ -449,11 +449,9 @@ public class MulticastQueueTotalOnly<E extends Serializable>
 		PointToPointQueueSenderEnd<MulticastMessage> out = connectToPeerAt(jrmsg.getSender());
 		
 		HashMap<String,BigInteger> map = server.getVariableMap();
-		System.out.println("Sending " + map.toString());
 		
 		ClientEventVarMap cemap = new ClientEventVarMap("server", 0, timestamp.getNextTimeStamp(), map);
 		sendToAll(new MulticastMessagePayload(myAddress, cemap, timestamp.getTimestamp()));
-		//out.put(new MulticastMessagePayload(myAddress, cemap, timestamp.getTimestamp()));
 	}
 
 	/**

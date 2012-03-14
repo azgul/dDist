@@ -162,11 +162,7 @@ public class CalculatorTest {
 			
 			wait(5);
 
-			c2.read("a", new Callback<BigInteger>(){
-				public void result(BigInteger bi){
-					System.out.println("Callback lolz");
-				set(bi);
-			}});
+			c2.read("a", new Callback<BigInteger>(){public void result(BigInteger bi){set(bi);}});
 
 			wait(2);
 
@@ -174,21 +170,17 @@ public class CalculatorTest {
 		} catch (Exception e){
 			e.printStackTrace();
 		}
-		
-		s1.leaveGroup();
-		//s2.leaveGroup();
 	}
 	
 	public void set(BigInteger bi) {
 		curr = bi;
-		System.out.println("It was set to " + bi);
 	}
 	
 	private BigInteger curr, prev;
 	
 	public static void wait(int secs) {
 		try {
-			Thread.currentThread().sleep(secs*1000);
+			Thread.currentThread().sleep(secs*300);
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(-1);

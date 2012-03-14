@@ -157,8 +157,8 @@ public class ServerStandalone extends Thread implements ClientEventVisitor, Serv
      */
     public void visit(ClientEventRead eventRead) {
 		synchronized(valuation) {
-			System.out.println("Read variable "+eventRead.var+" = "+valuate(eventRead.var));
-			System.out.println("HashMap: "+valuation);
+			//System.out.println("Read variable "+eventRead.var+" = "+valuate(eventRead.var));
+			//System.out.println("HashMap: "+valuation);
 			eventRead.setVal(valuate(eventRead.var));
 			acknowledgeEvent(eventRead);
 		}
@@ -194,7 +194,7 @@ public class ServerStandalone extends Thread implements ClientEventVisitor, Serv
 	public void setVariableMap(HashMap<String,BigInteger> vm) {
 		synchronized(valuation){
 			valuation.putAll(vm);
-			System.out.println("After putting all: "+valuation);
+			//System.out.println("After putting all: "+valuation);
 		}
 	}
     

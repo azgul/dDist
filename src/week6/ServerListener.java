@@ -38,20 +38,14 @@ public class ServerListener extends Thread {
 				if((msg = queue.get()) != null){
 						if(msg instanceof MulticastMessagePayload){
 							ClientEvent ce = (ClientEvent)((MulticastMessagePayload)msg).getPayload();
-							//System.out.println(queue.getAddress()+" - Got message: "+ce+" from "+ msg.getSender());
-							//System.out.println(msg.getSender().equals(queue.getAddress()));
 							if(ce instanceof ClientEventConnect && !msg.getSender().equals(queue.getAddress())){
 								ClientEventConnect connect = (ClientEventConnect)ce;
 								ce = new ClientEventRemoteConnect(connect.clientName,connect.eventID,connect.clientAddress,connect.timestamp);
 								
 							}else if(ce instanceof ClientEventDisconnect && !msg.getSender().equals(queue.getAddress())){
-								System.out.println("Changing to ClientEventRemoteDC on "+queue.getAddress());
 								ClientEventDisconnect dis = (ClientEventDisconnect)ce;
 								ce = new ClientEventRemoteDisconnect(dis.clientName,dis.eventID,dis.timestamp);
 							}
-							
-							System.out.println(queue.getAddress() + " - Got event: "+ce);
-							//System.out.println(queue.getAddress()+" - accepted: " + ce);
 							ce.accept(visitor);
 						}
 				}
