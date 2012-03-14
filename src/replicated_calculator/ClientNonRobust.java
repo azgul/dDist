@@ -153,6 +153,7 @@ public class ClientNonRobust extends Thread implements Client  {
 	toServer.shutdown();
 	fromServer.shutdown();
 	shutdown = true;
+	saveTimestamp();
     }
     
     /**
