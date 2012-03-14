@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 import replicated_calculator.Server;
+import week6.ClientEventVarMap;
 import week6.ServerReplicated;
 
 /**
@@ -450,7 +451,9 @@ public class MulticastQueueTotalOnly<E extends Serializable>
 		HashMap<String,BigInteger> map = server.getVariableMap();
 		System.out.println("Sending " + map.toString());
 		
-		out.put(new MulticastMessagePayload(myAddress, map, timestamp.getTimestamp()));
+		ClientEventVarMap cemap = new ClientEventVarMap("server", 0, timestamp.getNextTimeStamp(), map);
+		sendToAll(new MulticastMessagePayload(myAddress, cemap, timestamp.getTimestamp()));
+		//out.put(new MulticastMessagePayload(myAddress, cemap, timestamp.getTimestamp()));
 	}
 
 	/**
@@ -530,9 +533,10 @@ public class MulticastQueueTotalOnly<E extends Serializable>
 		Frame newFrame = new Frame(pmsg, missingPeers);
 		frames.add(newFrame);
 		
-		if (pmsg.getPayload() instanceof HashMap) {
+		if (pmsg.getPayload() instanceof ClientEventVarMap) {
 			//System.out.println("Received "+ pmsg.getPayload());
-			server.setVariableMap((HashMap<String,BigInteger>)pmsg.getPayload());
+			ClientEventVarMap cemap = (ClientEventVarMap) pmsg.getPayload();
+			server.setVariableMap((HashMap<String,BigInteger>)cemap.getMap());
 		}
 
 		sendToAllExceptMe(new MulticastMessageAcknowledge(myAddress, pmsg.getTimestamp()));

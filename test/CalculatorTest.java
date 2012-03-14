@@ -95,7 +95,7 @@ public class CalculatorTest {
 		}
 	}
 	
-	/*@Test
+	@Test
 	public void doesItWork() {
 		setup();
 		wait(5);
@@ -126,7 +126,7 @@ public class CalculatorTest {
 			}
 			wait(1);
 		}
-	}*/
+	}
 	
 	@Test
 	public void doesNewServerGetOldVariables() {
@@ -149,8 +149,6 @@ public class CalculatorTest {
 			// connecting to server 1
 			c1.connect(new InetSocketAddress(InetAddress.getLocalHost(), serverCP), clientP, "1");
 			c1.assign("a", bi);
-			c1.assign("b", bi);
-			c1.add("a", "b", "c");
 			
 			wait(5);
 
