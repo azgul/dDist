@@ -1,6 +1,7 @@
 package replicated_calculator;
 
 import week6.ClientEventConnectDenied;
+import week6.ClientEventVarMap;
 
 /**
  * An interface used for visiting client events.
@@ -23,4 +24,5 @@ public interface ClientEventVisitor {
 	public void visit(ClientEventEndAtomic event);
 	public void visit(ClientEventMult event);
 	public void visit(ClientEventRead event);
+	public void visit(ClientEventVarMap event);
 }
