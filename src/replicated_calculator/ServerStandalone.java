@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.net.InetSocketAddress;
 import java.util.Queue;
 import week6.ClientEventConnectDenied;
+import week6.ClientEventVarMap;
 
 /**
  * 
@@ -178,6 +179,10 @@ public class ServerStandalone extends Thread implements ClientEventVisitor, Serv
 
 	public void visit(ClientEventConnectDenied event){
 		System.out.println("Visitor of a denied connect of user "+event.clientName+".");
+	}
+	
+	public void visit(ClientEventVarMap event){
+		setVariableMap(event.getMap());
 	}
 	
 	public HashMap<String,BigInteger> getVariableMap() {
