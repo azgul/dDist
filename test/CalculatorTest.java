@@ -159,7 +159,7 @@ public class CalculatorTest {
 			
 			wait(5);
 
-			c2.connect(new InetSocketAddress(InetAddress.getLocalHost(), serverCP+2), clientP+2, "2");
+			c2.connect(new InetSocketAddress(InetAddress.getLocalHost(), serverCP+1), clientP+2, "2");
 			//c2.disconnect();
 			
 			wait(5);
